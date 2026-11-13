@@ -158,6 +158,7 @@ window.dash = (function () {
 .sf-cmp-wrap { overflow-x: auto; }
 .sf-cmp { display: grid; grid-template-columns: minmax(150px, 190px) repeat(var(--n, 1), minmax(150px, 1fr)); font-size: var(--cds-font-size-caption); font-variant-numeric: tabular-nums; }
 .sf-cmp-row, .sf-cmp-vals { display: contents; }
+.sf-cmp.sf-cmp-isempty { display: none; }
 .sf-cmp-label, .sf-cmp-cell { padding: 6px 8px; border-bottom: 1px solid var(--color-border-line); }
 .sf-cmp-label { color: var(--color-fg-muted); }
 .sf-cmp-group { grid-column: 1 / -1; padding: var(--cds-pad-md) 8px 4px; font-weight: var(--cds-font-weight-medium); color: var(--sf-cisco); border-bottom: 2px solid var(--sf-cisco); }
@@ -455,7 +456,7 @@ dash.calc('total_models', {
 
 window.sfState = window.sfState || {
   sort: { key: 'switching_gbps', dir: -1 },
-  sel: ['C9300-48P', '6300M 48G Class4 PoE 4SFP56 (JL661A)', 'EX4400-48P']
+  sel: []
 };
 
 window.sfFilter = function (rows) {
@@ -523,18 +524,24 @@ window.sfRedraw = function () { ['results', 'count', 'vendorsum', 'navcount'].fo
     el.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
     if (t.dataset.target !== 'sf-head') setActive(t.dataset.target);
   }));
+  const atBottom = () => {
+    const se = document.scrollingElement || document.documentElement;
+    return se.scrollHeight - (se.scrollTop + window.innerHeight) < 8;
+  };
+  /* The section in view is the last one whose top has passed 30% of the window height. */
   const ids = ['requirements', 'matches', 'compare'];
-  const secs = ids.map((id) => document.getElementById(id)).filter(Boolean);
-  if ('IntersectionObserver' in window && secs.length) {
-    const seen = new Map();
-    const io = new IntersectionObserver((entries) => {
-      entries.forEach((e) => seen.set(e.target.id, e.isIntersecting ? e.intersectionRatio : 0));
-      let best = null, bestR = 0;
-      ids.forEach((id) => { const r = seen.get(id) || 0; if (r > bestR) { bestR = r; best = id; } });
-      if (best) setActive(best);
-    }, { root: document, rootMargin: '-15% 0px -45% 0px', threshold: [0, 0.1, 0.25, 0.5, 0.75, 1] });
-    secs.forEach((s) => io.observe(s));
-  }
+  let ticking = false;
+  const update = () => {
+    ticking = false;
+    let best = ids[0];
+    const line = window.innerHeight * 0.3;
+    ids.forEach((id) => { const el = document.getElementById(id); if (el && el.getBoundingClientRect().top <= line) best = id; });
+    if (atBottom()) best = 'compare';
+    setActive(best);
+  };
+  window.addEventListener('scroll', () => { if (!ticking) { ticking = true; requestAnimationFrame(update); } }, { passive: true });
+  window.addEventListener('resize', update);
+  update();
   document.querySelectorAll('.sf-sort').forEach((th) => {
     const go = () => {
       const s = window.sfState.sort, k = th.dataset.k;
@@ -678,7 +685,10 @@ window.sfRedraw = function () { ['results', 'count', 'vendorsum', 'navcount'].fo
     const picked = d.status === 'ok' ? S.sel.map((m) => d.data.find((r) => r.model === m)).filter(Boolean) : [];
     if (f === 'model') {
       const grid = el.closest('.sf-cmp');
-      if (grid) grid.style.setProperty('--n', Math.max(1, picked.length));
+      if (grid) {
+        grid.style.setProperty('--n', Math.max(1, picked.length));
+        grid.classList.toggle('sf-cmp-isempty', d.status === 'ok' && picked.length === 0);
+      }
       const empty = document.getElementById('cmp-empty');
       const hint = document.getElementById('cmp-hint');
       if (empty) empty.hidden = picked.length > 0 || d.status !== 'ok';
