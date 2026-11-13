@@ -1,0 +1,617 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Switch Spec Finder</title>
+<meta name="description" content="Search and compare Cisco Catalyst 9200/9300/9400/9500, HPE Aruba CX 6000-6400 and Juniper EX switches by ports, PoE, uplinks, capacity, memory, MAC and route scale.">
+<style>
+:root {
+  --color-fg: #17202b; --color-fg-muted: #5b6675; --color-bg: #f6f7f9; --color-panel: #ffffff;
+  --color-border-line: #dde1e7; --color-ok: #1d7a4f; --color-warn: #a86400; --color-bad: #b3261e;
+  --series-1: #2f6fde; --series-2: #d9682b; --series-3: #2a9d6f;
+  --font-anthropic-sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-anthropic-serif: Georgia, "Times New Roman", serif;
+  --cds-font-size-caption: 12.5px; --cds-font-size-body: 14px; --cds-font-size-heading: 17px; --cds-font-size-title: 30px;
+  --cds-font-weight-medium: 600;
+  --cds-gap-xs: 4px; --cds-gap-sm: 8px; --cds-gap-md: 12px; --cds-gap-lg: 16px; --cds-gap-xl: 24px;
+  --cds-pad-sm: 8px; --cds-pad-md: 12px; --cds-pad-lg: 16px;
+  --cds-radius: 8px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-fg: #e7ebf0; --color-fg-muted: #9aa5b3; --color-bg: #12161c; --color-panel: #1a2029;
+    --color-border-line: #2c3542; --color-ok: #4cc38a; --color-warn: #e5a54b; --color-bad: #f2867d;
+    --series-1: #6b9cf0; --series-2: #f0955f; --series-3: #5cc79c;
+    color-scheme: dark;
+  }
+}
+html, body { margin: 0; background: var(--color-bg); color: var(--color-fg); font: 14px/1.5 var(--font-anthropic-sans); }
+#dash-root { max-width: 1400px; margin: 0 auto; padding-block: 24px 40px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.dash-select { width: 100%; font: inherit; padding: 6px 8px; border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); background-color: var(--color-bg); color: var(--color-fg); }
+.sf-foot { margin-top: 8px; color: var(--color-fg-muted); font-size: 12.5px; }
+.sf-foot a { color: inherit; }
+.sf-load-error { color: var(--color-bad); }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script>
+/* Minimal stand-in for the Claude dashboard runtime: data(), calc(), draw(), colors. */
+window.dash = (function () {
+  const store = { specs: { status: 'loading', data: [] } };
+  const calcs = {}, draws = {};
+  function data(id) {
+    const c = calcs[id];
+    if (c) {
+      const ins = c.inputs.map(data);
+      if (ins.some((x) => x.status !== 'ok')) return { status: 'loading', data: null };
+      return { status: 'ok', data: c.fn(...ins.map((x) => x.data)) };
+    }
+    return store[id] || { status: 'missing', data: [] };
+  }
+  function draw(name, fn) {
+    if (fn) draws[name] = fn;
+    if (!draws[name]) return;
+    document.querySelectorAll('[data-draw="' + name + '"]').forEach((el) => {
+      try { draws[name](el); } catch (e) { console.error(e); }
+    });
+  }
+  return {
+    data, draw,
+    calc: (id, opts) => { calcs[id] = opts; },
+    colors: ['var(--series-1)', 'var(--series-2)', 'var(--series-3)'],
+    _set(id, value) { store[id] = value; Object.keys(draws).forEach((n) => draw(n)); }
+  };
+})();
+</script>
+</head>
+<body>
+<div id="dash-root">
+<style>
+.sf { display: grid; gap: var(--cds-gap-xl); font-family: var(--font-anthropic-sans); color: var(--color-fg); }
+.sf h1 { font-family: var(--font-anthropic-serif); font-weight: 400; font-size: var(--cds-font-size-title); margin: 0; text-wrap: balance; }
+.sf h2 { font-size: var(--cds-font-size-heading); font-weight: var(--cds-font-weight-medium); margin: 0; }
+.sf-lede { margin: var(--cds-gap-xs) 0 0; color: var(--color-fg-muted); }
+.sf-lede b { color: var(--color-fg); font-variant-numeric: tabular-nums; }
+.sf-note { border: 1px solid var(--color-border-line); border-left: 3px solid var(--color-warn); border-radius: var(--cds-radius); padding: var(--cds-pad-sm) var(--cds-pad-md); font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); max-width: 80ch; }
+.sf-card { background: var(--color-panel); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); padding: var(--cds-pad-lg); display: grid; gap: var(--cds-gap-md); min-width: 0; }
+.sf-filters { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: var(--cds-gap-md); }
+.sf-field { display: grid; gap: var(--cds-gap-xs); min-width: 0; }
+.sf-field > label, .sf-legend { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); text-transform: uppercase; letter-spacing: .04em; }
+.sf-field select, .sf-field input[type=search], .sf-field input[type=number] { width: 100%; box-sizing: border-box; font: inherit; }
+.sf-field input[type=search], .sf-field input[type=number] { padding: 6px 8px; border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); background-color: var(--color-bg); color: var(--color-fg); }
+.sf-checks { display: flex; flex-wrap: wrap; gap: var(--cds-gap-xs) var(--cds-gap-md); }
+.sf-checks label { display: inline-flex; gap: 6px; align-items: center; cursor: pointer; }
+.sf-wide { grid-column: 1 / -1; }
+.sf-bar { display: flex; flex-wrap: wrap; gap: var(--cds-gap-sm); align-items: center; justify-content: space-between; }
+.sf-btn { font: inherit; padding: 6px 12px; border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); background-color: var(--color-bg); color: var(--color-fg); cursor: pointer; }
+.sf-btn:hover { border-color: var(--color-fg-muted); }
+.sf-btn:focus-visible, .sf-sort:focus-visible { outline: 2px solid var(--color-fg); outline-offset: 2px; }
+.sf-chips { display: flex; flex-wrap: wrap; gap: var(--cds-gap-sm); }
+.sf-chip { display: inline-flex; gap: 6px; align-items: baseline; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--color-border-line); font-size: var(--cds-font-size-caption); }
+.sf-chip b { font-variant-numeric: tabular-nums; }
+.sf-scroll { overflow-x: auto; min-height: 120px; }
+.sf-table { border-collapse: collapse; width: 100%; font-size: var(--cds-font-size-caption); font-variant-numeric: tabular-nums; }
+.sf-table th, .sf-table td { padding: 6px 8px; border-bottom: 1px solid var(--color-border-line); text-align: left; white-space: nowrap; vertical-align: top; }
+.sf-table td.sf-wrap { white-space: normal; min-width: 150px; }
+.sf-table th { color: var(--color-fg-muted); font-weight: var(--cds-font-weight-medium); position: sticky; top: 0; background: var(--color-panel); }
+.sf-table td.n, .sf-table th.n { text-align: right; }
+.sf-sort { cursor: pointer; user-select: none; }
+.sf-sort::after { content: " ↕"; opacity: .35; }
+.sf-sort[aria-sort=ascending]::after { content: " ↑"; opacity: 1; }
+.sf-sort[aria-sort=descending]::after { content: " ↓"; opacity: 1; }
+.sf-table tbody tr:hover { background: var(--color-bg); }
+.sf-table tr.sf-picked { background: var(--color-bg); }
+.sf-table a { color: inherit; }
+.sf-vtag { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+.sf-cmp-wrap { overflow-x: auto; }
+.sf-cmp { display: grid; grid-template-columns: minmax(150px, 190px) repeat(var(--n, 1), minmax(150px, 1fr)); font-size: var(--cds-font-size-caption); font-variant-numeric: tabular-nums; }
+.sf-cmp-row, .sf-cmp-vals { display: contents; }
+.sf-cmp-label, .sf-cmp-cell { padding: 6px 8px; border-bottom: 1px solid var(--color-border-line); }
+.sf-cmp-label { color: var(--color-fg-muted); }
+.sf-cmp-group { grid-column: 1 / -1; padding: var(--cds-pad-md) 8px 4px; font-weight: var(--cds-font-weight-medium); border-bottom: 1px solid var(--color-fg-muted); }
+.sf-cmp-head .sf-cmp-cell { font-weight: var(--cds-font-weight-medium); font-size: var(--cds-font-size-body); }
+.sf-best { font-weight: var(--cds-font-weight-medium); color: var(--color-ok); }
+.sf-yes { color: var(--color-ok); }
+.sf-no { color: var(--color-fg-muted); }
+.sf-muted { color: var(--color-fg-muted); font-size: var(--cds-font-size-caption); margin: 0; }
+.sf-ver { display: inline-block; padding: 1px 8px; border-radius: 999px; border: 1px solid var(--color-border-line); }
+.sf-ver-ok { color: var(--color-ok); border-color: var(--color-ok); }
+.sf-ver-part { color: var(--color-warn); border-color: var(--color-warn); }
+.sf-ver-no { color: var(--color-bad); border-color: var(--color-bad); }
+.sf-wrapcell { white-space: normal; line-height: 1.4; }
+.sf-cmp a { color: inherit; }
+[data-dash-source-state=refreshing] { opacity: .5; }
+</style>
+
+<div class="sf">
+  <header id="sf-head">
+    <h1>Switch Spec Finder</h1>
+    <p class="sf-lede"><b data-draw="count">—</b> of <b data-draw="total" data-source="total_models">—</b> Cisco Catalyst, HPE Aruba CX and Juniper EX models meet the requirements below.</p>
+  </header>
+
+  <p class="sf-note" id="sf-caveat">Checked on 13 Nov 2026 against the Cisco datasheets, HPE Aruba QuickSpecs and HPE-hosted Juniper datasheets linked in each row. The Verified column says how much of a row was confirmed, and a dash means the datasheet doesn't state that value. Juniper EX4300 is no longer published, so its rows are unverified. Aruba has no CX 6001, 6002 or 6003; the CX 6000 family is the 6000, 6100, 6200, 6300 and 6400 series, all listed here.</p>
+
+  <section class="sf-card" id="requirements" aria-labelledby="req-h">
+    <div class="sf-bar">
+      <h2 id="req-h">Requirements</h2>
+      <button type="button" class="sf-btn" id="f-reset">Reset filters</button>
+    </div>
+    <div class="sf-filters">
+      <div class="sf-field sf-wide">
+        <span class="sf-legend">Vendor</span>
+        <div class="sf-checks">
+          <label><input type="checkbox" class="sf-vendor" id="f-v-cisco" value="Cisco" checked> Cisco Catalyst</label>
+          <label><input type="checkbox" class="sf-vendor" id="f-v-aruba" value="HPE Aruba" checked> HPE Aruba CX</label>
+          <label><input type="checkbox" class="sf-vendor" id="f-v-juniper" value="Juniper" checked> Juniper EX</label>
+        </div>
+      </div>
+      <div class="sf-field">
+        <label for="f-q">Search model or series</label>
+        <input type="search" id="f-q" placeholder="e.g. 9300, 6300M, EX4400">
+      </div>
+      <div class="sf-field">
+        <label for="f-ports">Min. access ports</label>
+        <input type="number" id="f-ports" min="0" step="12" placeholder="Any">
+      </div>
+      <div class="sf-field">
+        <label for="f-speed">Access port speed</label>
+        <select class="dash-select" id="f-speed">
+          <option value="">Any</option>
+          <option value="1">1G or faster</option>
+          <option value="2.5">mGig 2.5G or faster</option>
+          <option value="5">mGig 5G or faster</option>
+          <option value="10">10G or faster</option>
+          <option value="25">25G or faster</option>
+          <option value="100">100G</option>
+        </select>
+      </div>
+      <div class="sf-field">
+        <label for="f-uplink">Uplink speed</label>
+        <select class="dash-select" id="f-uplink">
+          <option value="">Any</option>
+          <option value="10">10G or faster</option>
+          <option value="25">25G or faster</option>
+          <option value="40">40G or faster</option>
+          <option value="100">100G or faster</option>
+          <option value="400">400G</option>
+        </select>
+      </div>
+      <div class="sf-field">
+        <label for="f-poe">PoE</label>
+        <select class="dash-select" id="f-poe">
+          <option value="">Any</option>
+          <option value="none">Non-PoE only</option>
+          <option value="any">PoE (any class)</option>
+          <option value="30">PoE+ 30 W/port or more</option>
+          <option value="60">UPOE / Class 6, 60 W or more</option>
+          <option value="90">UPOE+ / Class 8, 90 W</option>
+        </select>
+      </div>
+      <div class="sf-field">
+        <label for="f-budget">Min. PoE budget (W)</label>
+        <input type="number" id="f-budget" min="0" step="10" placeholder="Any">
+      </div>
+      <div class="sf-field">
+        <label for="f-sw">Switching capacity</label>
+        <select class="dash-select" id="f-sw">
+          <option value="">Any</option>
+          <option value="100">100 Gbps or more</option>
+          <option value="250">250 Gbps or more</option>
+          <option value="500">500 Gbps or more</option>
+          <option value="1000">1 Tbps or more</option>
+          <option value="3000">3 Tbps or more</option>
+          <option value="10000">10 Tbps or more</option>
+        </select>
+      </div>
+      <div class="sf-field">
+        <label for="f-dram">DRAM</label>
+        <select class="dash-select" id="f-dram">
+          <option value="">Any</option>
+          <option value="2">2 GB or more</option>
+          <option value="4">4 GB or more</option>
+          <option value="8">8 GB or more</option>
+          <option value="16">16 GB or more</option>
+        </select>
+      </div>
+      <div class="sf-field">
+        <label for="f-flash">Flash / storage</label>
+        <select class="dash-select" id="f-flash">
+          <option value="">Any</option>
+          <option value="4">4 GB or more</option>
+          <option value="8">8 GB or more</option>
+          <option value="16">16 GB or more</option>
+          <option value="32">32 GB or more</option>
+        </select>
+      </div>
+      <div class="sf-field">
+        <label for="f-mac">MAC address table</label>
+        <select class="dash-select" id="f-mac">
+          <option value="">Any</option>
+          <option value="16000">16K or more</option>
+          <option value="32000">32K or more</option>
+          <option value="64000">64K or more</option>
+          <option value="128000">128K or more</option>
+          <option value="256000">256K or more</option>
+        </select>
+      </div>
+      <div class="sf-field">
+        <label for="f-routes">IPv4 routes</label>
+        <select class="dash-select" id="f-routes">
+          <option value="">Any</option>
+          <option value="1000">1K or more</option>
+          <option value="16000">16K or more</option>
+          <option value="32000">32K or more</option>
+          <option value="64000">64K or more</option>
+          <option value="200000">200K or more</option>
+          <option value="1000000">1M or more</option>
+        </select>
+      </div>
+      <div class="sf-field">
+        <label for="f-form">Form factor</label>
+        <select class="dash-select" id="f-form">
+          <option value="">Any</option>
+          <option value="Fixed">Fixed</option>
+          <option value="Compact">Compact / fanless</option>
+          <option value="Modular chassis">Modular chassis</option>
+        </select>
+      </div>
+      <div class="sf-field sf-wide">
+        <span class="sf-legend">Must support</span>
+        <div class="sf-checks">
+          <label><input type="checkbox" class="sf-feat" id="f-stack" value="stacking"> Stacking / virtual chassis</label>
+          <label><input type="checkbox" class="sf-feat" id="f-ospf" value="ospf"> OSPF</label>
+          <label><input type="checkbox" class="sf-feat" id="f-bgp" value="bgp"> BGP</label>
+          <label><input type="checkbox" class="sf-feat" id="f-evpn" value="evpn_vxlan"> EVPN-VXLAN</label>
+          <label><input type="checkbox" class="sf-feat" id="f-macsec" value="macsec"> MACsec</label>
+          <label><input type="checkbox" class="sf-feat" id="f-mpls" value="mpls"> MPLS</label>
+          <label><input type="checkbox" class="sf-feat" id="f-psu" value="redundant_psu"> Redundant PSU</label>
+        </div>
+      </div>
+      <div class="sf-field sf-wide">
+        <span class="sf-legend">Data quality</span>
+        <div class="sf-checks">
+          <label><input type="checkbox" id="f-verified"> Only rows fully verified against the datasheet</label>
+        </div>
+      </div>
+    </div>
+    <div class="sf-chips" data-draw="vendorsum" aria-label="Matches by vendor"></div>
+  </section>
+
+  <section class="sf-card" id="matches" aria-labelledby="match-h">
+    <div class="sf-bar">
+      <h2 id="match-h">Matching models</h2>
+      <p class="sf-muted">Tick up to 4 models to compare them below. Click a column heading to sort.</p>
+    </div>
+    <div class="sf-scroll">
+      <table class="sf-table" id="results-table" data-source="specs" data-row-key="model">
+        <thead>
+          <tr>
+            <th scope="col">Compare</th>
+            <th scope="col" class="sf-sort" tabindex="0" data-k="model" data-field="model">Model</th>
+            <th scope="col" class="sf-sort" tabindex="0" data-k="vendor" data-field="vendor">Vendor</th>
+            <th scope="col" class="sf-sort n" tabindex="0" data-k="ports" data-field="ports">Access ports</th>
+            <th scope="col" class="sf-sort" tabindex="0" data-k="port_max_gbps" data-field="port_speed">Port speed</th>
+            <th scope="col" class="sf-sort" tabindex="0" data-k="uplink_max_gbps" data-field="uplinks">Uplinks</th>
+            <th scope="col" class="sf-sort" tabindex="0" data-k="poe_w_port" data-field="poe">PoE</th>
+            <th scope="col" class="sf-sort n" tabindex="0" data-k="poe_w_port" data-field="poe_w_port">W/port</th>
+            <th scope="col" class="sf-sort n" tabindex="0" data-k="poe_budget_w" data-field="poe_budget_w">PoE budget (W)</th>
+            <th scope="col" class="sf-sort n" tabindex="0" data-k="switching_gbps" data-field="switching_gbps" aria-sort="descending">Switching (Gbps)</th>
+            <th scope="col" class="sf-sort n" tabindex="0" data-k="dram_gb" data-field="dram_gb">DRAM (GB)</th>
+            <th scope="col" class="sf-sort n" tabindex="0" data-k="flash_gb" data-field="flash_gb">Flash (GB)</th>
+            <th scope="col" class="sf-sort n" tabindex="0" data-k="mac" data-field="mac">MAC entries</th>
+            <th scope="col" class="sf-sort n" tabindex="0" data-k="ipv4_routes" data-field="ipv4_routes">IPv4 routes</th>
+            <th scope="col" class="sf-sort" tabindex="0" data-k="stacking" data-field="stacking">Stacking</th>
+            <th scope="col" class="sf-sort" tabindex="0" data-k="verified" data-field="verified">Verified</th>
+            <th scope="col">Datasheet</th>
+          </tr>
+        </thead>
+        <tbody data-draw="results"></tbody>
+      </table>
+    </div>
+    <p class="sf-muted" id="no-match" hidden>No model meets every requirement. Loosen one of the filters above.</p>
+  </section>
+
+  <section class="sf-card" id="compare" aria-labelledby="cmp-h">
+    <div class="sf-bar">
+      <h2 id="cmp-h">Feature comparison</h2>
+      <button type="button" class="sf-btn" id="cmp-clear">Clear comparison</button>
+    </div>
+    <p class="sf-muted" id="cmp-empty" hidden>Tick models in the table above to compare them side by side.</p>
+    <p class="sf-muted" id="cmp-hint">The best value in each numeric row is shown in green.</p>
+    <div class="sf-cmp-wrap">
+      <div class="sf-cmp" id="cmp-grid" data-source="specs">
+        <div class="sf-cmp-row sf-cmp-head"><div class="sf-cmp-label">Model</div><div class="sf-cmp-vals" data-draw="cmp" data-f="model"></div></div>
+        <div class="sf-cmp-row"><div class="sf-cmp-label">Vendor</div><div class="sf-cmp-vals" data-draw="cmp" data-f="vendor"></div></div>
+        <div class="sf-cmp-row"><div class="sf-cmp-label">Series</div><div class="sf-cmp-vals" data-draw="cmp" data-f="series"></div></div>
+        <div class="sf-cmp-row"><div class="sf-cmp-label">Operating system</div><div class="sf-cmp-vals" data-draw="cmp" data-f="os"></div></div>
+        <div class="sf-cmp-row"><div class="sf-cmp-label">Form factor</div><div class="sf-cmp-vals" data-draw="cmp" data-f="form"></div></div>
+
+        <div class="sf-cmp-group">Ports and PoE</div>
+        <div class="sf-cmp-row"><div class="sf-cmp-label">Access ports</div><div class="sf-cmp-vals" data-draw="cmp" data-f="ports" data-best="max"></div></div>
+        <div class="sf-cmp-row"><div class="sf-cmp-label">Port speed</div><div class="sf-cmp-vals" data-draw="cmp" data-f="port_speed"></div></div>
+        <div class="sf-cmp-row"><div class="sf-cmp-label">Max access speed (Gbps)</div><div class="sf-cmp-vals" data-draw="cmp" data-f="port_max_gbps" data-best="max"></div></div>
+        <div class="sf-cmp-row"><div class="sf-cmp-label">Uplinks</div><div class="sf-cmp-vals" data-draw="cmp" data-f="uplinks"></div></div>
+        <div class="sf-cmp-row"><div class="sf-cmp-label">Max uplink speed (Gbps)</div><div class="sf-cmp-vals" data-draw="cmp" data-f="uplink_max_gbps" data-best="max"></div></div>
+        <div class="sf-cmp-row"><div class="sf-cmp-label">PoE type</div><div class="sf-cmp-vals" data-draw="cmp" data-f="poe"></div></div>
+        <div class="sf-cmp-row"><div class="sf-cmp-label">Max PoE per port (W)</div><div class="sf-cmp-vals" data-draw="cmp" data-f="poe_w_port" data-best="max"></div></div>
+        <div class="sf-cmp-row"><div class="sf-cmp-label">PoE budget (W)</div><div class="sf-cmp-vals" data-draw="cmp" data-f="poe_budget_w" data-best="max"></div></div>
+
+        <div class="sf-cmp-group">Performance and scale</div>
+        <div class="sf-cmp-row"><div class="sf-cmp-label">Switching capacity (Gbps)</div><div class="sf-cmp-vals" data-draw="cmp" data-f="switching_gbps" data-best="max"></div></div>
+        <div class="sf-cmp-row"><div class="sf-cmp-label">Forwarding rate (Mpps)</div><div class="sf-cmp-vals" data-draw="cmp" data-f="fwd_mpps" data-best="max"></div></div>
+        <div class="sf-cmp-row"><div class="sf-cmp-label">DRAM (GB)</div><div class="sf-cmp-vals" data-draw="cmp" data-f="dram_gb" data-best="max"></div></div>
+        <div class="sf-cmp-row"><div class="sf-cmp-label">Flash / storage (GB)</div><div class="sf-cmp-vals" data-draw="cmp" data-f="flash_gb" data-best="max"></div></div>
+        <div class="sf-cmp-row"><div class="sf-cmp-label">MAC address entries</div><div class="sf-cmp-vals" data-draw="cmp" data-f="mac" data-best="max"></div></div>
+        <div class="sf-cmp-row"><div class="sf-cmp-label">IPv4 routes</div><div class="sf-cmp-vals" data-draw="cmp" data-f="ipv4_routes" data-best="max"></div></div>
+
+        <div class="sf-cmp-group">Features</div>
+        <div class="sf-cmp-row"><div class="sf-cmp-label">Stacking technology</div><div class="sf-cmp-vals" data-draw="cmp" data-f="stacking"></div></div>
+        <div class="sf-cmp-row"><div class="sf-cmp-label">Max stack / VC members</div><div class="sf-cmp-vals" data-draw="cmp" data-f="stack_max" data-best="max"></div></div>
+        <div class="sf-cmp-row"><div class="sf-cmp-label">OSPF</div><div class="sf-cmp-vals" data-draw="cmp" data-f="ospf"></div></div>
+        <div class="sf-cmp-row"><div class="sf-cmp-label">BGP</div><div class="sf-cmp-vals" data-draw="cmp" data-f="bgp"></div></div>
+        <div class="sf-cmp-row"><div class="sf-cmp-label">EVPN-VXLAN</div><div class="sf-cmp-vals" data-draw="cmp" data-f="evpn_vxlan"></div></div>
+        <div class="sf-cmp-row"><div class="sf-cmp-label">MACsec</div><div class="sf-cmp-vals" data-draw="cmp" data-f="macsec"></div></div>
+        <div class="sf-cmp-row"><div class="sf-cmp-label">MPLS</div><div class="sf-cmp-vals" data-draw="cmp" data-f="mpls"></div></div>
+        <div class="sf-cmp-row"><div class="sf-cmp-label">Redundant power supply</div><div class="sf-cmp-vals" data-draw="cmp" data-f="redundant_psu"></div></div>
+
+        <div class="sf-cmp-group">Source</div>
+        <div class="sf-cmp-row"><div class="sf-cmp-label">Verification</div><div class="sf-cmp-vals" data-draw="cmp" data-f="verified"></div></div>
+        <div class="sf-cmp-row"><div class="sf-cmp-label">Datasheet notes</div><div class="sf-cmp-vals sf-cmp-notes" data-draw="cmp" data-f="notes"></div></div>
+        <div class="sf-cmp-row"><div class="sf-cmp-label">Datasheet</div><div class="sf-cmp-vals" data-draw="cmp" data-f="datasheet"></div></div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+dash.calc('total_models', {
+  title: 'Models listed',
+  description: 'Number of switch models in the spec list.',
+  inputs: ['specs'],
+  fn: (specs) => specs.length
+});
+
+window.sfState = window.sfState || {
+  sort: { key: 'switching_gbps', dir: -1 },
+  sel: ['C9300-48P', '6300M 48G Class4 PoE 4SFP56 (JL661A)', 'EX4400-48P']
+};
+
+window.sfFilter = function (rows) {
+  const val = (id) => { const el = document.getElementById(id); return el ? el.value : ''; };
+  const min = (id) => { const v = val(id); return v === '' ? null : +v; };
+  const vendors = [...document.querySelectorAll('.sf-vendor')].filter((c) => c.checked).map((c) => c.value);
+  const feats = [...document.querySelectorAll('.sf-feat')].filter((c) => c.checked).map((c) => c.value);
+  const q = val('f-q').trim().toLowerCase();
+  const poe = val('f-poe'), form = val('f-form');
+  const mins = [['ports', 'f-ports'], ['port_max_gbps', 'f-speed'], ['uplink_max_gbps', 'f-uplink'], ['poe_budget_w', 'f-budget'],
+    ['switching_gbps', 'f-sw'], ['dram_gb', 'f-dram'], ['flash_gb', 'f-flash'], ['mac', 'f-mac'], ['ipv4_routes', 'f-routes']]
+    .map(([k, id]) => [k, min(id)]).filter(([, v]) => v !== null && v > 0);
+  const vEl = document.getElementById('f-verified');
+  const onlyVerified = !!(vEl && vEl.checked);
+  return rows.filter((r) => {
+    if (!vendors.includes(r.vendor)) return false;
+    if (onlyVerified && r.verified !== 'Verified') return false;
+    if (q && !(r.model + ' ' + r.series + ' ' + r.port_speed + ' ' + r.uplinks).toLowerCase().includes(q)) return false;
+    if (form && r.form !== form) return false;
+    const w = +r.poe_w_port || 0;
+    if (poe === 'none' && w > 0) return false;
+    if (poe === 'any' && w === 0) return false;
+    if (poe && poe !== 'none' && poe !== 'any' && w < +poe) return false;
+    for (const [k, v] of mins) { if (r[k] == null || +r[k] < v) return false; }
+    for (const f of feats) {
+      if (f === 'stacking') { if (!(+r.stack_max > 1)) return false; }
+      else if (r[f] !== 'Yes') return false;
+    }
+    return true;
+  });
+};
+
+window.sfRedraw = function () { ['results', 'count', 'vendorsum'].forEach((n) => dash.draw(n)); };
+
+(function () {
+  const redraw = () => window.sfRedraw();
+  document.querySelectorAll('#requirements input, #requirements select').forEach((el) => {
+    el.addEventListener('input', redraw);
+    el.addEventListener('change', redraw);
+  });
+  const reset = document.getElementById('f-reset');
+  if (reset) reset.addEventListener('click', () => {
+    document.querySelectorAll('#requirements select, #requirements input[type=search], #requirements input[type=number]').forEach((el) => { el.value = ''; });
+    document.querySelectorAll('.sf-vendor').forEach((c) => { c.checked = true; });
+    document.querySelectorAll('.sf-feat').forEach((c) => { c.checked = false; });
+    const fv = document.getElementById('f-verified');
+    if (fv) fv.checked = false;
+    redraw();
+  });
+  const clear = document.getElementById('cmp-clear');
+  if (clear) clear.addEventListener('click', () => { window.sfState.sel = []; dash.draw('cmp'); dash.draw('results'); });
+  document.querySelectorAll('.sf-sort').forEach((th) => {
+    const go = () => {
+      const s = window.sfState.sort, k = th.dataset.k;
+      s.dir = s.key === k ? -s.dir : (k === 'model' || k === 'vendor' || k === 'stacking' ? 1 : -1);
+      s.key = k;
+      document.querySelectorAll('.sf-sort').forEach((o) => o.removeAttribute('aria-sort'));
+      th.setAttribute('aria-sort', s.dir > 0 ? 'ascending' : 'descending');
+      dash.draw('results');
+    };
+    th.addEventListener('click', go);
+    th.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
+  });
+})();
+</script>
+
+<script>
+(function () {
+  const fmt = d3.format(',');
+  const show = (v) => (v == null || v === '' ? '—' : (typeof v === 'number' ? fmt(v) : String(v)));
+  const vendorColor = { 'Cisco': dash.colors[0], 'HPE Aruba': dash.colors[1], 'Juniper': dash.colors[2] };
+
+  dash.draw('total', (el) => {
+    const d = dash.data('total_models');
+    el.textContent = d.status === 'ok' && d.data != null ? fmt(d.data) : '—';
+  });
+
+  dash.draw('count', (el) => {
+    const d = dash.data('specs');
+    el.textContent = d.status === 'ok' ? fmt(window.sfFilter(d.data).length) : '—';
+  });
+
+  dash.draw('vendorsum', (el) => {
+    const d = dash.data('specs');
+    el.replaceChildren();
+    if (d.status !== 'ok') return;
+    const rows = window.sfFilter(d.data);
+    ['Cisco', 'HPE Aruba', 'Juniper'].forEach((v) => {
+      const chip = document.createElement('span');
+      chip.className = 'sf-chip';
+      const dot = document.createElement('span');
+      dot.className = 'sf-vtag';
+      dot.style.background = vendorColor[v];
+      const name = document.createElement('span');
+      name.textContent = v;
+      const n = document.createElement('b');
+      n.textContent = fmt(rows.filter((r) => r.vendor === v).length);
+      chip.append(dot, name, n);
+      el.append(chip);
+    });
+  });
+
+  dash.draw('results', (tbody) => {
+    const d = dash.data('specs');
+    tbody.replaceChildren();
+    const none = document.getElementById('no-match');
+    if (d.status !== 'ok') { if (none) none.hidden = true; return; }
+    const S = window.sfState;
+    const rows = window.sfFilter(d.data).slice();
+    const k = S.sort.key, dir = S.sort.dir;
+    rows.sort((a, b) => {
+      const x = a[k], y = b[k];
+      if (x == null && y == null) return 0;
+      if (x == null) return 1;
+      if (y == null) return -1;
+      return (typeof x === 'number' && typeof y === 'number' ? x - y : String(x).localeCompare(String(y))) * dir;
+    });
+    if (none) none.hidden = rows.length > 0;
+    const full = S.sel.length >= 4;
+    const cols = [['model'], ['vendor'], ['ports', 'n'], ['port_speed', 'sf-wrap'], ['uplinks', 'sf-wrap'], ['poe'], ['poe_w_port', 'n'],
+      ['poe_budget_w', 'n'], ['switching_gbps', 'n'], ['dram_gb', 'n'], ['flash_gb', 'n'], ['mac', 'n'], ['ipv4_routes', 'n'], ['stacking'], ['verified']];
+    rows.forEach((r) => {
+      const tr = document.createElement('tr');
+      tr.dataset.key = encodeURIComponent(r.model);
+      const picked = S.sel.includes(r.model);
+      if (picked) tr.className = 'sf-picked';
+      const tdc = document.createElement('td');
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.checked = picked;
+      cb.disabled = !picked && full;
+      cb.setAttribute('aria-label', 'Compare ' + r.model);
+      cb.addEventListener('change', () => {
+        if (cb.checked) { if (!S.sel.includes(r.model) && S.sel.length < 4) S.sel.push(r.model); }
+        else S.sel = S.sel.filter((m) => m !== r.model);
+        dash.draw('results');
+        dash.draw('cmp');
+      });
+      tdc.append(cb);
+      tr.append(tdc);
+      cols.forEach(([f, cls]) => {
+        const td = document.createElement('td');
+        if (cls) td.className = cls;
+        if (f === 'vendor') {
+          const dot = document.createElement('span');
+          dot.className = 'sf-vtag';
+          dot.style.background = vendorColor[r.vendor];
+          td.append(dot, document.createTextNode(r.vendor));
+        } else if (f === 'model') {
+          const b = document.createElement('b');
+          b.textContent = r.model;
+          td.append(b);
+        } else if (f === 'verified') {
+          const s = document.createElement('span');
+          s.className = 'sf-ver ' + (r.verified === 'Verified' ? 'sf-ver-ok' : r.verified === 'Partly verified' ? 'sf-ver-part' : 'sf-ver-no');
+          s.textContent = show(r.verified);
+          td.append(s);
+        } else {
+          td.textContent = show(r[f]);
+        }
+        tr.append(td);
+      });
+      const tdl = document.createElement('td');
+      if (typeof r.datasheet === 'string' && r.datasheet.startsWith('https://')) {
+        const a = document.createElement('a');
+        a.href = r.datasheet;
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+        a.textContent = 'Open';
+        tdl.append(a);
+      } else tdl.textContent = '—';
+      tr.append(tdl);
+      tbody.append(tr);
+    });
+  });
+
+  dash.draw('cmp', (el) => {
+    const d = dash.data('specs');
+    el.replaceChildren();
+    const f = el.dataset.f;
+    const S = window.sfState;
+    const picked = d.status === 'ok' ? S.sel.map((m) => d.data.find((r) => r.model === m)).filter(Boolean) : [];
+    if (f === 'model') {
+      const grid = el.closest('.sf-cmp');
+      if (grid) grid.style.setProperty('--n', Math.max(1, picked.length));
+      const empty = document.getElementById('cmp-empty');
+      const hint = document.getElementById('cmp-hint');
+      if (empty) empty.hidden = picked.length > 0 || d.status !== 'ok';
+      if (hint) hint.hidden = picked.length < 2;
+    }
+    if (!picked.length) {
+      const c = document.createElement('div');
+      c.className = 'sf-cmp-cell';
+      c.textContent = '—';
+      el.append(c);
+      return;
+    }
+    let best = null;
+    if (el.dataset.best === 'max' && picked.length > 1) {
+      const vals = picked.map((r) => r[f]).filter((v) => typeof v === 'number');
+      if (vals.length) best = Math.max(...vals);
+      if (vals.length && vals.every((v) => v === best)) best = null;
+    }
+    picked.forEach((r) => {
+      const c = document.createElement('div');
+      c.className = 'sf-cmp-cell';
+      c.dataset.source = 'specs';
+      c.dataset.where = 'model=' + encodeURIComponent(r.model);
+      c.dataset.field = f;
+      const v = r[f];
+      if (f === 'datasheet') {
+        if (typeof v === 'string' && v.startsWith('https://')) {
+          const a = document.createElement('a');
+          a.href = v; a.target = '_blank'; a.rel = 'noopener noreferrer';
+          a.textContent = 'Open datasheet';
+          c.append(a);
+        } else c.textContent = '—';
+      }
+      else if (f === 'notes') { c.classList.add('sf-wrapcell'); c.textContent = show(v); }
+      else if (v === 'Yes') { c.classList.add('sf-yes'); c.textContent = '✓ Yes'; }
+      else if (v === 'No') { c.classList.add('sf-no'); c.textContent = '✗ No'; }
+      else c.textContent = show(v);
+      if (best !== null && v === best) c.classList.add('sf-best');
+      el.append(c);
+    });
+  });
+})();
+</script>
+
+<p class="sf-foot">Data: <a href="data/switch_specs.json">switch_specs.json</a> · <a href="data/switch_specs.csv">switch_specs.csv</a> · Sources and method in the <a href="https://github.com/mrevelino/switch-spec-finder#readme">README</a>. Vendor names and product names belong to their owners; always confirm figures on the linked datasheet.</p>
+<p class="sf-foot sf-load-error" id="load-error" hidden>The spec data could not be loaded. Open the page through a web server (for example GitHub Pages or <code>python -m http.server</code>), not as a local file.</p>
+</div>
+<script>
+fetch('data/switch_specs.json')
+  .then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); })
+  .then((j) => dash._set('specs', { status: 'ok', data: j.rows }))
+  .catch(() => { dash._set('specs', { status: 'error', data: [] }); const e = document.getElementById('load-error'); if (e) e.hidden = false; });
+</script>
+</body>
+</html>
