@@ -19,16 +19,9 @@
   --cds-radius: 8px;
   color-scheme: light;
 }
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-fg: #e7ebf0; --color-fg-muted: #9aa5b3; --color-bg: #12161c; --color-panel: #1a2029;
-    --color-border-line: #2c3542; --color-ok: #4cc38a; --color-warn: #e5a54b; --color-bad: #f2867d;
-    --series-1: #6b9cf0; --series-2: #f0955f; --series-3: #5cc79c;
-    color-scheme: dark;
-  }
-}
-html, body { margin: 0; background: var(--color-bg); color: var(--color-fg); font: 14px/1.5 var(--font-anthropic-sans); }
-#dash-root { max-width: 1400px; margin: 0 auto; padding-block: 24px 40px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+html, body { margin: 0; background: #f4f7fa; color: var(--color-fg); font: 14px/1.5 var(--font-anthropic-sans); }
+#dash-root { max-width: 1400px; margin: 0 auto; padding-bottom: 32px; padding-left: env(safe-area-inset-left, 0px); padding-right: env(safe-area-inset-right, 0px); }
+.sf-foot { padding-inline: max(16px, 2vw); }
 .dash-select { width: 100%; font: inherit; padding: 6px 8px; border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); background-color: var(--color-bg); color: var(--color-fg); }
 .sf-foot { margin-top: 8px; color: var(--color-fg-muted); font-size: 12.5px; }
 .sf-foot a { color: inherit; }
@@ -68,12 +61,19 @@ window.dash = (function () {
 <body>
 <div id="dash-root">
 <style>
+#dash-root { --dash-gutter: 0; }
 /* Palette: Cisco blue + HPE green, with a deep Cisco navy for the header band. Mid-tone hues read on light and dark grounds. */
 .sf {
   --sf-cisco: #049fd9; --sf-cisco-deep: #005073; --sf-navy: #0d274d;
   --sf-hpe: #01a982; --sf-juniper: #7c5cf0;
   --sf-tint-blue: color-mix(in srgb, var(--sf-cisco) 10%, transparent);
   --sf-tint-green: color-mix(in srgb, var(--sf-hpe) 12%, transparent);
+  /* Always light, whatever the viewer's theme. */
+  --color-fg: #17202b; --color-fg-muted: #5b6675; --color-bg: #f4f7fa; --color-panel: #ffffff;
+  --color-border-line: #dde3ea; --color-ok: #1d7a4f; --color-warn: #a86400; --color-bad: #b3261e;
+  color-scheme: light;
+  background: var(--color-bg);
+  padding-block: 24px 32px; padding-inline: max(16px, 2vw);
   display: grid; gap: var(--cds-gap-xl); font-family: var(--font-anthropic-sans); color: var(--color-fg);
 }
 .sf h1 { font-family: var(--font-anthropic-serif); font-weight: 400; font-size: var(--cds-font-size-title); margin: 0; text-wrap: balance; }
@@ -85,6 +85,7 @@ window.dash = (function () {
 .sf-brandbar span { height: 4px; width: 36px; border-radius: 2px; }
 .sf-brandbar .b1 { background: var(--sf-cisco); } .sf-brandbar .b2 { background: #ffffff; opacity: .6; } .sf-brandbar .b3 { background: var(--sf-hpe); }
 .sf input[type=checkbox] { accent-color: var(--sf-cisco-deep); }
+.sf .dash-select { background-color: #ffffff; color: var(--color-fg); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); }
 #requirements, #matches { border-top: 3px solid var(--sf-cisco); }
 #compare { border-top: 3px solid var(--sf-hpe); }
 .sf h2 { color: var(--color-fg); }
