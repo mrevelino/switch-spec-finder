@@ -1,4 +1,4 @@
-# Switch Spec Finder
+# Enterprise Campus Switch Spec Finder
 
 Search and compare campus/data-center Ethernet switches by requirement:
 
