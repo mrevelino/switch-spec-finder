@@ -25,6 +25,8 @@ html, body { margin: 0; background: #f4f7fa; color: var(--color-fg); font: 14px/
 .dash-select { width: 100%; font: inherit; padding: 6px 8px; border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); background-color: var(--color-bg); color: var(--color-fg); }
 .sf-foot { margin-top: 8px; color: var(--color-fg-muted); font-size: 12.5px; }
 .sf-foot a { color: inherit; }
+.sf-visits { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--color-border-line); }
+.sf-visits img { display: block; height: 20px; }
 .sf-load-error { color: var(--color-bad); }
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
@@ -635,6 +637,10 @@ window.sfRedraw = function () { ['results', 'count', 'vendorsum'].forEach((n) =>
 </script>
 
 <p class="sf-foot">Data: <a href="data/switch_specs.json">switch_specs.json</a> · <a href="data/switch_specs.csv">switch_specs.csv</a> · Sources and method in the <a href="https://github.com/mrevelino/switch-spec-finder#readme">README</a>. Vendor and product names belong to their owners; always confirm figures on the linked datasheet.</p>
+<div class="sf-foot sf-visits">
+  <img src="https://hits.sh/mrevelino.github.io/switch-spec-finder.svg?view=today-total&amp;label=Page%20views&amp;color=049fd9&amp;labelColor=0d274d" alt="Page views today and in total" height="20">
+  <span>Page views today / all time. Every page load counts, including repeat visits; counted by <a href="https://hits.sh/" rel="noopener">hits.sh</a>.</span>
+</div>
 <p class="sf-foot sf-load-error" id="load-error" hidden>The spec data could not be loaded. Open the page through a web server (for example GitHub Pages or <code>python -m http.server</code>), not as a local file.</p>
 </div>
 <script>

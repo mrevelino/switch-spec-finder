@@ -9,6 +9,10 @@ Search and compare campus/data-center Ethernet switches by requirement:
 
 **Live page:** https://mrevelino.github.io/switch-spec-finder/
 
+![Page views today / all time](https://hits.sh/mrevelino.github.io/switch-spec-finder.svg?view=today-total&label=Page%20views&color=049fd9&labelColor=0d274d)
+
+The page-view badge (also at the foot of the live page) comes from [hits.sh](https://hits.sh/). It counts every page load, including repeat visits, so it is not a count of unique people. Opening this README also counts as a view.
+
 ## What you can do
 
 - Filter by access port count and speed (1G, mGig 2.5/5/10G, 25G, 100G), uplink speed, PoE class and budget, switching capacity, DRAM, flash, MAC table size, IPv4 routes and form factor.
