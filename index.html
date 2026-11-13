@@ -68,8 +68,29 @@ window.dash = (function () {
 <body>
 <div id="dash-root">
 <style>
-.sf { display: grid; gap: var(--cds-gap-xl); font-family: var(--font-anthropic-sans); color: var(--color-fg); }
+/* Palette: Cisco blue + HPE green, with a deep Cisco navy for the header band. Mid-tone hues read on light and dark grounds. */
+.sf {
+  --sf-cisco: #049fd9; --sf-cisco-deep: #005073; --sf-navy: #0d274d;
+  --sf-hpe: #01a982; --sf-juniper: #7c5cf0;
+  --sf-tint-blue: color-mix(in srgb, var(--sf-cisco) 10%, transparent);
+  --sf-tint-green: color-mix(in srgb, var(--sf-hpe) 12%, transparent);
+  display: grid; gap: var(--cds-gap-xl); font-family: var(--font-anthropic-sans); color: var(--color-fg);
+}
 .sf h1 { font-family: var(--font-anthropic-serif); font-weight: 400; font-size: var(--cds-font-size-title); margin: 0; text-wrap: balance; }
+.sf-head { background: linear-gradient(115deg, var(--sf-navy) 0%, var(--sf-cisco-deep) 45%, var(--sf-hpe) 100%); border-radius: var(--cds-radius); padding: var(--cds-pad-lg) calc(var(--cds-pad-lg) * 1.5); }
+.sf-head h1 { color: #ffffff; }
+.sf-head .sf-lede { color: rgba(255, 255, 255, .85); }
+.sf-head .sf-lede b { color: #ffffff; }
+.sf-brandbar { display: flex; gap: 6px; margin-top: var(--cds-gap-sm); }
+.sf-brandbar span { height: 4px; width: 36px; border-radius: 2px; }
+.sf-brandbar .b1 { background: var(--sf-cisco); } .sf-brandbar .b2 { background: #ffffff; opacity: .6; } .sf-brandbar .b3 { background: var(--sf-hpe); }
+.sf input[type=checkbox] { accent-color: var(--sf-cisco-deep); }
+#requirements, #matches { border-top: 3px solid var(--sf-cisco); }
+#compare { border-top: 3px solid var(--sf-hpe); }
+.sf h2 { color: var(--color-fg); }
+#requirements h2::before, #matches h2::before, #compare h2::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 8px; vertical-align: 1px; }
+#requirements h2::before, #matches h2::before { background: var(--sf-cisco); }
+#compare h2::before { background: var(--sf-hpe); }
 .sf h2 { font-size: var(--cds-font-size-heading); font-weight: var(--cds-font-weight-medium); margin: 0; }
 .sf-lede { margin: var(--cds-gap-xs) 0 0; color: var(--color-fg-muted); }
 .sf-lede b { color: var(--color-fg); font-variant-numeric: tabular-nums; }
@@ -85,7 +106,7 @@ window.dash = (function () {
 .sf-wide { grid-column: 1 / -1; }
 .sf-bar { display: flex; flex-wrap: wrap; gap: var(--cds-gap-sm); align-items: center; justify-content: space-between; }
 .sf-btn { font: inherit; padding: 6px 12px; border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); background-color: var(--color-bg); color: var(--color-fg); cursor: pointer; }
-.sf-btn:hover { border-color: var(--color-fg-muted); }
+.sf-btn:hover { border-color: var(--sf-cisco); color: var(--sf-cisco); }
 .sf-btn:focus-visible, .sf-sort:focus-visible { outline: 2px solid var(--color-fg); outline-offset: 2px; }
 .sf-chips { display: flex; flex-wrap: wrap; gap: var(--cds-gap-sm); }
 .sf-chip { display: inline-flex; gap: 6px; align-items: baseline; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--color-border-line); font-size: var(--cds-font-size-caption); }
@@ -98,10 +119,12 @@ window.dash = (function () {
 .sf-table td.n, .sf-table th.n { text-align: right; }
 .sf-sort { cursor: pointer; user-select: none; }
 .sf-sort::after { content: " ↕"; opacity: .35; }
-.sf-sort[aria-sort=ascending]::after { content: " ↑"; opacity: 1; }
-.sf-sort[aria-sort=descending]::after { content: " ↓"; opacity: 1; }
-.sf-table tbody tr:hover { background: var(--color-bg); }
-.sf-table tr.sf-picked { background: var(--color-bg); }
+.sf-sort[aria-sort=ascending]::after { content: " ↑"; opacity: 1; color: var(--sf-cisco); }
+.sf-sort[aria-sort=descending]::after { content: " ↓"; opacity: 1; color: var(--sf-cisco); }
+.sf-sort[aria-sort] { color: var(--color-fg); }
+.sf-table thead th { border-bottom: 2px solid var(--sf-cisco); }
+.sf-table tbody tr:hover { background: var(--sf-tint-blue); }
+.sf-table tr.sf-picked { background: var(--sf-tint-green); box-shadow: inset 3px 0 0 var(--sf-hpe); }
 .sf-table a { color: inherit; }
 .sf-vtag { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
 .sf-cmp-wrap { overflow-x: auto; }
@@ -109,10 +132,11 @@ window.dash = (function () {
 .sf-cmp-row, .sf-cmp-vals { display: contents; }
 .sf-cmp-label, .sf-cmp-cell { padding: 6px 8px; border-bottom: 1px solid var(--color-border-line); }
 .sf-cmp-label { color: var(--color-fg-muted); }
-.sf-cmp-group { grid-column: 1 / -1; padding: var(--cds-pad-md) 8px 4px; font-weight: var(--cds-font-weight-medium); border-bottom: 1px solid var(--color-fg-muted); }
-.sf-cmp-head .sf-cmp-cell { font-weight: var(--cds-font-weight-medium); font-size: var(--cds-font-size-body); }
-.sf-best { font-weight: var(--cds-font-weight-medium); color: var(--color-ok); }
-.sf-yes { color: var(--color-ok); }
+.sf-cmp-group { grid-column: 1 / -1; padding: var(--cds-pad-md) 8px 4px; font-weight: var(--cds-font-weight-medium); color: var(--sf-cisco); border-bottom: 2px solid var(--sf-cisco); }
+.sf-cmp-head .sf-cmp-cell { font-weight: var(--cds-font-weight-medium); font-size: var(--cds-font-size-body); background: var(--sf-tint-blue); }
+.sf-cmp-head .sf-cmp-label { background: var(--sf-tint-blue); }
+.sf-best { font-weight: var(--cds-font-weight-medium); color: var(--sf-hpe); background: var(--sf-tint-green); }
+.sf-yes { color: var(--sf-hpe); }
 .sf-no { color: var(--color-fg-muted); }
 .sf-muted { color: var(--color-fg-muted); font-size: var(--cds-font-size-caption); margin: 0; }
 .sf-ver { display: inline-block; padding: 1px 8px; border-radius: 999px; border: 1px solid var(--color-border-line); }
@@ -125,8 +149,9 @@ window.dash = (function () {
 </style>
 
 <div class="sf">
-  <header id="sf-head">
+  <header id="sf-head" class="sf-head">
     <h1>Enterprise Campus Switch Spec Finder</h1>
+    <div class="sf-brandbar" aria-hidden="true"><span class="b1"></span><span class="b2"></span><span class="b3"></span></div>
     <p class="sf-lede"><b data-draw="count">—</b> of <b data-draw="total" data-source="total_models">—</b> Cisco Catalyst, HPE Aruba CX and Juniper EX models meet the requirements below.</p>
   </header>
 
@@ -445,7 +470,7 @@ window.sfRedraw = function () { ['results', 'count', 'vendorsum'].forEach((n) =>
 (function () {
   const fmt = d3.format(',');
   const show = (v) => (v == null || v === '' ? '—' : (typeof v === 'number' ? fmt(v) : String(v)));
-  const vendorColor = { 'Cisco': dash.colors[0], 'HPE Aruba': dash.colors[1], 'Juniper': dash.colors[2] };
+  const vendorColor = { 'Cisco': 'var(--sf-cisco)', 'HPE Aruba': 'var(--sf-hpe)', 'Juniper': 'var(--sf-juniper)' };
 
   dash.draw('total', (el) => {
     const d = dash.data('total_models');
