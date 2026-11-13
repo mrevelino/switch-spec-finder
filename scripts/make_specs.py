@@ -252,6 +252,88 @@ add(ex9200, model="EX9208 chassis", ports=None, switching_gbps=7500,
 add(ex9200, model="EX9214 chassis", ports=480, port_speed="Line cards: 1G, 10G, 40G, 100G (480x 10G at wire speed)", switching_gbps=12000,
     notes=ex9200["notes"] + " 11 line-card slots with fabric redundancy (12 without); up to 480 10GbE ports.")
 
+# ---------------- Fortinet FortiSwitch ----------------
+FDS = "https://www.fortinet.com/content/dam/fortinet/assets/data-sheets/"
+FL = "FortiLink (FortiGate-managed)"
+fsa = dict(vendor="Fortinet", series="FortiSwitch Secure Access 100F", os="FortiSwitchOS", form="Fixed",
+           stacking=FL, stack_max=None, ospf=True, bgp=False, evpn_vxlan=False, macsec=True, mpls=False,
+           redundant_psu=False, ipv4_routes=None, datasheet=FDS + "pdf/fortiswitch-secure-access-series.pdf",
+           port_speed="1G", port_max_gbps=1, verified=P,
+           notes="Hardware figures from the Secure Access datasheet. Feature flags (OSPF/RIP/VRRP/IS-IS, MACsec) are listed for the whole family; Fortinet says to check the FortiSwitch Feature Matrix per model. Managed from a FortiGate via FortiLink (8 to 300 switches per FortiGate); no stacking.")
+add(fsa, model="FS-108F", form="Compact", ports=8, port_speed="1G (1 port is PoE-powered PD)", uplinks="2x 1G SFP", uplink_max_gbps=1,
+    poe="None", poe_w_port=0, poe_budget_w=0, switching_gbps=20, fwd_mpps=30.0, dram_gb=0.25, flash_gb=0.03, mac=8000)
+add(fsa, model="FS-108F-POE", form="Compact", ports=8, uplinks="2x 1G SFP", uplink_max_gbps=1,
+    poe="PoE+", poe_w_port=30, poe_budget_w=65, switching_gbps=20, fwd_mpps=30.0, dram_gb=0.25, flash_gb=0.03, mac=8000)
+add(fsa, model="FS-108F-FPOE", form="Compact", ports=8, uplinks="2x 1G SFP", uplink_max_gbps=1,
+    poe="PoE+", poe_w_port=30, poe_budget_w=130, switching_gbps=20, fwd_mpps=30.0, dram_gb=0.25, flash_gb=0.03, mac=8000)
+for m, poe, w, b in [("FS-124F", "None", 0, 0), ("FS-124F-POE", "PoE+ (12 ports)", 30, 185), ("FS-124F-FPOE", "PoE+", 30, 370)]:
+    add(fsa, model=m, ports=24, uplinks="4x 10G SFP+", uplink_max_gbps=10, poe=poe, poe_w_port=w, poe_budget_w=b,
+        switching_gbps=128, fwd_mpps=190.0, dram_gb=0.5, flash_gb=0.06, mac=32000)
+for m, poe, w, b in [("FS-148F", "None", 0, 0), ("FS-148F-POE", "PoE+ (24 ports)", 30, 370), ("FS-148F-FPOE", "PoE+", 30, 740)]:
+    add(fsa, model=m, ports=48, uplinks="4x 10G SFP+", uplink_max_gbps=10, poe=poe, poe_w_port=w, poe_budget_w=b,
+        switching_gbps=176, fwd_mpps=260.0, dram_gb=0.5, flash_gb=0.06, mac=32000)
+fsg = dict(fsa, series="FortiSwitch Secure Access 100G", dram_gb=1, mac=32000)
+add(fsg, model="FS-110G-FPOE", form="Compact", ports=10, port_speed="2x mGig up to 5G + 8x mGig up to 2.5G", port_max_gbps=5,
+    uplinks="4x 1/10G SFP+", uplink_max_gbps=10, poe="PoE++ (802.3bt on 2 ports, PoE+ on 8)", poe_w_port=90, poe_budget_w=200,
+    switching_gbps=140, fwd_mpps=208.0, flash_gb=0.008)
+add(fsg, model="FS-124G", ports=24, port_speed="mGig 10M-2.5G", port_max_gbps=2.5, uplinks="6x 1/10G SFP+", uplink_max_gbps=10,
+    poe="None", poe_w_port=0, poe_budget_w=0, switching_gbps=240, fwd_mpps=355.0, flash_gb=0.25)
+add(fsg, model="FS-124G-FPOE", ports=24, port_speed="mGig 10M-2.5G", port_max_gbps=2.5, uplinks="6x 1/10G SFP+", uplink_max_gbps=10,
+    poe="PoE++ (802.3bt on 8 ports, PoE+ on 16)", poe_w_port=90, poe_budget_w=780, switching_gbps=240, fwd_mpps=355.0, flash_gb=0.25)
+fs2 = dict(fsa, series="FortiSwitch Secure Access 200", dram_gb=0.5, flash_gb=0.125, mac=16000, ipv4_routes=64,
+           uplinks="4x 1G SFP", uplink_max_gbps=1,
+           notes="Hardware figures from the Secure Access datasheet; 64 IPv4 route entries, 512 host entries. Feature flags are listed for the whole family (check the FortiSwitch Feature Matrix per model). Optional external FRPS-740 redundant power on PoE models. Managed from a FortiGate via FortiLink; no stacking.")
+add(fs2, model="FS-224D-FPOE", ports=24, poe="PoE+", poe_w_port=30, poe_budget_w=370, switching_gbps=56, fwd_mpps=83.0)
+add(fs2, model="FS-224E", ports=24, poe="None", poe_w_port=0, poe_budget_w=0, switching_gbps=56, fwd_mpps=83.0)
+add(fs2, model="FS-224E-POE", ports=24, poe="PoE+ (12 ports)", poe_w_port=30, poe_budget_w=180, switching_gbps=56, fwd_mpps=83.0)
+add(fs2, model="FS-248D", ports=48, poe="None", poe_w_port=0, poe_budget_w=0, switching_gbps=104, fwd_mpps=155.0)
+add(fs2, model="FS-248E-POE", ports=48, poe="PoE+ (24 ports)", poe_w_port=30, poe_budget_w=370, switching_gbps=104, fwd_mpps=155.0)
+add(fs2, model="FS-248E-FPOE", ports=48, poe="PoE+", poe_w_port=30, poe_budget_w=740, switching_gbps=104, fwd_mpps=155.0)
+
+fsc = dict(vendor="Fortinet", series="FortiSwitch Secure Campus 300", os="FortiSwitchOS", form="Fixed",
+           stacking=FL, stack_max=None, ospf=True, bgp=True, evpn_vxlan=False, macsec=True, mpls=False,
+           redundant_psu=True, datasheet=FDS + "pdf/fortiswitch-campus-series.pdf", verified=P,
+           notes="Hardware figures from the Secure Campus datasheet. Feature flags (OSPF, BGP, IS-IS, MACsec, MCLAG) are listed for the whole family; check the FortiSwitch Feature Matrix per model. Managed from a FortiGate via FortiLink (8 to 300 switches); no stacking.")
+c3 = dict(fsc, dram_gb=2, flash_gb=8, mac=32000, ipv4_routes=38000, uplinks="4x 1/10G SFP+", uplink_max_gbps=10)
+add(c3, model="FS-324G", ports=24, port_speed="mGig 10M-2.5G", port_max_gbps=2.5, poe="None", poe_w_port=0, poe_budget_w=0, switching_gbps=200, fwd_mpps=297.0)
+add(c3, model="FS-324G-FPOE", ports=24, port_speed="mGig 10M-2.5G", port_max_gbps=2.5, poe="PoE++ (802.3bt Type 4)", poe_w_port=90, poe_budget_w=420, switching_gbps=200, fwd_mpps=297.0)
+add(c3, model="FS-348G", ports=48, port_speed="24x mGig 10M-2.5G + 24x 1G", port_max_gbps=2.5, poe="None", poe_w_port=0, poe_budget_w=0, switching_gbps=248, fwd_mpps=369.0)
+add(c3, model="FS-348G-FPOE", ports=48, port_speed="24x mGig 10M-2.5G + 24x 1G", port_max_gbps=2.5, poe="PoE++ (802.3bt Type 4)", poe_w_port=90, poe_budget_w=1560,
+    switching_gbps=248, fwd_mpps=369.0, notes=fsc["notes"] + " PoE budget 1,560 W with dual AC input (780 W single).")
+c4 = dict(fsc, series="FortiSwitch Secure Campus 400", dram_gb=1, flash_gb=0.25, uplinks="4x 1/10G SFP+", uplink_max_gbps=10)
+add(c4, model="FS-424E-FIBER", ports=24, port_speed="1G SFP", port_max_gbps=1, poe="None", poe_w_port=0, poe_budget_w=0, switching_gbps=128, fwd_mpps=190.0, mac=32000, ipv4_routes=16000)
+add(c4, model="FS-M426E-FPOE", ports=26, port_speed="16x 1G + 8x 2.5G + 2x 5G", port_max_gbps=5, poe="PoE+ (8 ports 4-pair 60 W)", poe_w_port=60, poe_budget_w=421,
+    switching_gbps=172, fwd_mpps=255.0, mac=16000, ipv4_routes=1000)
+add(c4, model="FS-424E-FPOE", ports=24, port_speed="1G", port_max_gbps=1, poe="PoE+", poe_w_port=30, poe_budget_w=421, switching_gbps=128, fwd_mpps=190.0, mac=16000, ipv4_routes=1000)
+c6 = dict(fsc, series="FortiSwitch Secure Campus 600", dram_gb=4, flash_gb=32, mac=64000, ipv4_routes=300000,
+          notes=fsc["notes"] + " 32 GB SSD. Dual hot-swap PSUs; PoE budget shown with two PSUs.")
+add(c6, model="FS-624F", ports=24, port_speed="mGig 1/2.5/5G", port_max_gbps=5, uplinks="4x 1/10/25G SFP28", uplink_max_gbps=25,
+    poe="None", poe_w_port=0, poe_budget_w=0, switching_gbps=440, fwd_mpps=654.0)
+add(c6, model="FS-624F-FPOE", ports=24, port_speed="mGig 1/2.5/5G", port_max_gbps=5, uplinks="4x 1/10/25G SFP28", uplink_max_gbps=25,
+    poe="PoE++ (802.3bt Type 4)", poe_w_port=90, poe_budget_w=1440, switching_gbps=440, fwd_mpps=654.0)
+add(c6, model="FS-648F", ports=48, port_speed="32x mGig 1/2.5G + 16x mGig 1/2.5/5G", port_max_gbps=5, uplinks="8x 1/10/25G SFP28", uplink_max_gbps=25,
+    poe="None", poe_w_port=0, poe_budget_w=0, switching_gbps=720, fwd_mpps=1071.0)
+add(c6, model="FS-648F-FPOE", ports=48, port_speed="32x mGig 1/2.5G + 16x mGig 1/2.5/5G", port_max_gbps=5, uplinks="8x 1/10/25G SFP28", uplink_max_gbps=25,
+    poe="PoE++ (802.3bt Type 4)", poe_w_port=90, poe_budget_w=1800, switching_gbps=720, fwd_mpps=1071.0)
+add(fsc, series="FortiSwitch Secure Campus T1024", model="FS-T1024F-FPOE", ports=24, port_speed="mGig 1/2.5/5/10G", port_max_gbps=10,
+    uplinks="2x 40/100G QSFP+/QSFP28", uplink_max_gbps=100, poe="PoE++ (802.3bt Type 4)", poe_w_port=90, poe_budget_w=1440,
+    switching_gbps=880, fwd_mpps=1309.0, dram_gb=8, flash_gb=8, mac=64000, ipv4_routes=8000,
+    notes=fsc["notes"] + " 8 GB SSD. Dual hot-swap PSUs; PoE budget shown with two PSUs.")
+
+fsr = dict(vendor="Fortinet", series="FortiSwitch Rugged", os="FortiSwitchOS", form="Rugged (DIN-rail)",
+           stacking=FL, stack_max=None, ospf=True, bgp=True, evpn_vxlan=False, macsec=False, mpls=False,
+           redundant_psu=True, datasheet=FDS + "FortiSwitchRugged.pdf", dram_gb=1, flash_gb=1, verified=P,
+           notes="Fanless, -40 to 75 °C, redundant DC input terminals. Routing protocols (OSPF, BGP, IS-IS) are listed for the family, but the 108F, 112F-POE and 216F-POE have no hardware routing table. MACsec not listed. Managed from a FortiGate via FortiLink.")
+add(fsr, model="FSR-108F", ports=6, port_speed="1G", port_max_gbps=1, uplinks="2x 1G SFP", uplink_max_gbps=1, poe="None", poe_w_port=0, poe_budget_w=0,
+    switching_gbps=16, fwd_mpps=23.8, mac=16000, ipv4_routes=None)
+add(fsr, model="FSR-112F-POE", ports=8, port_speed="1G", port_max_gbps=1, uplinks="4x 1G SFP", uplink_max_gbps=1, poe="PoE++ (802.3bt)", poe_w_port=90, poe_budget_w=240,
+    switching_gbps=24, fwd_mpps=35.7, mac=16000, ipv4_routes=None)
+add(fsr, model="FSR-216F-POE", ports=16, port_speed="1G", port_max_gbps=1, uplinks="4x 1/10G SFP+", uplink_max_gbps=10, poe="PoE++ (802.3bt)", poe_w_port=90, poe_budget_w=360,
+    switching_gbps=112, fwd_mpps=166.0, mac=16000, ipv4_routes=None)
+add(fsr, model="FSR-424F-POE", ports=24, port_speed="12x 1/2.5G RJ45 + 12x 1/2.5G SFP", port_max_gbps=2.5, uplinks="4x 10G SFP+ + 2x 40G QSFP+", uplink_max_gbps=40,
+    poe="PoE+ (12 ports 4-pair 60 W)", poe_w_port=60, poe_budget_w=421, switching_gbps=360, fwd_mpps=536.0, mac=32000, ipv4_routes=16000, flash_gb=0.25,
+    notes="Fanless, -40 to 70 °C, redundant DC input terminals. Hardware routing: 16,000 IPv4 routes. Routing protocols (OSPF, BGP, IS-IS) listed for the family. MACsec not listed. Managed from a FortiGate via FortiLink.")
+
 cols = ["vendor","series","model","os","form","ports","port_speed","port_max_gbps","uplinks","uplink_max_gbps",
         "poe","poe_w_port","poe_budget_w","switching_gbps","fwd_mpps","dram_gb","flash_gb","mac","ipv4_routes",
         "stacking","stack_max","ospf","bgp","evpn_vxlan","macsec","mpls","redundant_psu","verified","notes","datasheet"]
@@ -266,7 +348,7 @@ for r in rows:
 models = [o["model"] for o in out]
 assert len(models) == len(set(models)), "duplicate model"
 json.dump({"rows": out, "meta": [
-    {"label": "How made", "value": "Checked by Claude on 13 Nov 2026 against the Cisco datasheets, HPE Aruba QuickSpecs and HPE-hosted Juniper datasheets linked in each row. 'verified' says how much of each row was confirmed; 'notes' gives the datasheet's own wording where it matters."}]},
+    {"label": "How made", "value": "Checked by Claude on 13 Nov 2026 against the Cisco datasheets, HPE Aruba QuickSpecs, HPE-hosted Juniper datasheets and Fortinet FortiSwitch datasheets linked in each row. 'verified' says how much of each row was confirmed; 'notes' gives the datasheet's own wording where it matters."}]},
     open(sys.argv[1], "w"), indent=0)
 from collections import Counter
 print(len(out), "rows", Counter(o["verified"] for o in out))

@@ -65,7 +65,7 @@ window.dash = (function () {
 /* Palette: Cisco blue + HPE green, with a deep Cisco navy for the header band. Mid-tone hues read on light and dark grounds. */
 .sf {
   --sf-cisco: #049fd9; --sf-cisco-deep: #005073; --sf-navy: #0d274d;
-  --sf-hpe: #01a982; --sf-juniper: #7c5cf0;
+  --sf-hpe: #01a982; --sf-juniper: #7c5cf0; --sf-fortinet: #da291c;
   --sf-tint-blue: color-mix(in srgb, var(--sf-cisco) 10%, transparent);
   --sf-tint-green: color-mix(in srgb, var(--sf-hpe) 12%, transparent);
   /* Always light, whatever the viewer's theme. */
@@ -153,10 +153,10 @@ window.dash = (function () {
   <header id="sf-head" class="sf-head">
     <h1>Enterprise Campus Switch Spec Finder</h1>
     <div class="sf-brandbar" aria-hidden="true"><span class="b1"></span><span class="b2"></span><span class="b3"></span></div>
-    <p class="sf-lede"><b data-draw="count">—</b> of <b data-draw="total" data-source="total_models">—</b> Cisco Catalyst, HPE Aruba CX and Juniper EX models meet the requirements below.</p>
+    <p class="sf-lede"><b data-draw="count">—</b> of <b data-draw="total" data-source="total_models">—</b> Cisco Catalyst, HPE Aruba CX, Juniper EX and Fortinet FortiSwitch models meet the requirements below.</p>
   </header>
 
-  <p class="sf-note" id="sf-caveat">Checked on 13 Nov 2026 against the Cisco datasheets, HPE Aruba QuickSpecs and HPE-hosted Juniper datasheets linked in each row. The Verified column says how much of a row was confirmed, and a dash means the datasheet doesn't state that value. Juniper EX4300 is no longer published, so its rows are unverified. Aruba has no CX 6001, 6002 or 6003; the CX 6000 family is the 6000, 6100, 6200, 6300 and 6400 series, all listed here.</p>
+  <p class="sf-note" id="sf-caveat">Checked on 13 Nov 2026 against the Cisco datasheets, HPE Aruba QuickSpecs, HPE-hosted Juniper datasheets and Fortinet FortiSwitch datasheets linked in each row. FortiSwitch rows are partly verified because Fortinet lists routing and MACsec features per family, not per model, and FortiSwitches are managed from a FortiGate (FortiLink) rather than stacked. The Verified column says how much of a row was confirmed, and a dash means the datasheet doesn't state that value. Juniper EX4300 is no longer published, so its rows are unverified. Aruba has no CX 6001, 6002 or 6003; the CX 6000 family is the 6000, 6100, 6200, 6300 and 6400 series, all listed here.</p>
 
   <section class="sf-card" id="requirements" aria-labelledby="req-h">
     <div class="sf-bar">
@@ -170,6 +170,7 @@ window.dash = (function () {
           <label><input type="checkbox" class="sf-vendor" id="f-v-cisco" value="Cisco" checked> Cisco Catalyst</label>
           <label><input type="checkbox" class="sf-vendor" id="f-v-aruba" value="HPE Aruba" checked> HPE Aruba CX</label>
           <label><input type="checkbox" class="sf-vendor" id="f-v-juniper" value="Juniper" checked> Juniper EX</label>
+          <label><input type="checkbox" class="sf-vendor" id="f-v-fortinet" value="Fortinet" checked> Fortinet FortiSwitch</label>
         </div>
       </div>
       <div class="sf-field">
@@ -280,12 +281,14 @@ window.dash = (function () {
           <option value="Fixed">Fixed</option>
           <option value="Compact">Compact / fanless</option>
           <option value="Modular chassis">Modular chassis</option>
+          <option value="Rugged (DIN-rail)">Rugged / industrial (DIN-rail)</option>
         </select>
       </div>
       <div class="sf-field sf-wide">
         <span class="sf-legend">Must support</span>
         <div class="sf-checks">
           <label><input type="checkbox" class="sf-feat" id="f-stack" value="stacking"> Stacking / virtual chassis</label>
+          <label><input type="checkbox" class="sf-feat" id="f-fabric" value="fabric"> Stacking or controller-managed fabric (incl. FortiLink)</label>
           <label><input type="checkbox" class="sf-feat" id="f-ospf" value="ospf"> OSPF</label>
           <label><input type="checkbox" class="sf-feat" id="f-bgp" value="bgp"> BGP</label>
           <label><input type="checkbox" class="sf-feat" id="f-evpn" value="evpn_vxlan"> EVPN-VXLAN</label>
@@ -427,6 +430,7 @@ window.sfFilter = function (rows) {
     for (const [k, v] of mins) { if (r[k] == null || +r[k] < v) return false; }
     for (const f of feats) {
       if (f === 'stacking') { if (!(+r.stack_max > 1)) return false; }
+      else if (f === 'fabric') { if (!(+r.stack_max > 1) && !/FortiLink/.test(r.stacking || '')) return false; }
       else if (r[f] !== 'Yes') return false;
     }
     return true;
@@ -471,7 +475,7 @@ window.sfRedraw = function () { ['results', 'count', 'vendorsum'].forEach((n) =>
 (function () {
   const fmt = d3.format(',');
   const show = (v) => (v == null || v === '' ? '—' : (typeof v === 'number' ? fmt(v) : String(v)));
-  const vendorColor = { 'Cisco': 'var(--sf-cisco)', 'HPE Aruba': 'var(--sf-hpe)', 'Juniper': 'var(--sf-juniper)' };
+  const vendorColor = { 'Cisco': 'var(--sf-cisco)', 'HPE Aruba': 'var(--sf-hpe)', 'Juniper': 'var(--sf-juniper)', 'Fortinet': 'var(--sf-fortinet)' };
 
   dash.draw('total', (el) => {
     const d = dash.data('total_models');
@@ -488,7 +492,7 @@ window.sfRedraw = function () { ['results', 'count', 'vendorsum'].forEach((n) =>
     el.replaceChildren();
     if (d.status !== 'ok') return;
     const rows = window.sfFilter(d.data);
-    ['Cisco', 'HPE Aruba', 'Juniper'].forEach((v) => {
+    ['Cisco', 'HPE Aruba', 'Juniper', 'Fortinet'].forEach((v) => {
       const chip = document.createElement('span');
       chip.className = 'sf-chip';
       const dot = document.createElement('span');
@@ -630,7 +634,7 @@ window.sfRedraw = function () { ['results', 'count', 'vendorsum'].forEach((n) =>
 })();
 </script>
 
-<p class="sf-foot">Data: <a href="data/switch_specs.json">switch_specs.json</a> · <a href="data/switch_specs.csv">switch_specs.csv</a> · Sources and method in the <a href="https://github.com/mrevelino/switch-spec-finder#readme">README</a>. Vendor names and product names belong to their owners; always confirm figures on the linked datasheet.</p>
+<p class="sf-foot">Data: <a href="data/switch_specs.json">switch_specs.json</a> · <a href="data/switch_specs.csv">switch_specs.csv</a> · Sources and method in the <a href="https://github.com/mrevelino/switch-spec-finder#readme">README</a>. Vendor and product names belong to their owners; always confirm figures on the linked datasheet.</p>
 <p class="sf-foot sf-load-error" id="load-error" hidden>The spec data could not be loaded. Open the page through a web server (for example GitHub Pages or <code>python -m http.server</code>), not as a local file.</p>
 </div>
 <script>
