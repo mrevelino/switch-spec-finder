@@ -98,6 +98,31 @@ window.dash = (function () {
 .sf-lede { margin: var(--cds-gap-xs) 0 0; color: var(--color-fg-muted); }
 .sf-lede b { color: var(--color-fg); font-variant-numeric: tabular-nums; }
 .sf-note { border: 1px solid var(--color-border-line); border-left: 3px solid var(--color-warn); border-radius: var(--cds-radius); padding: var(--cds-pad-sm) var(--cds-pad-md); font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); max-width: 80ch; }
+/* Side tabs: a sticky rail on wide screens, a sticky tab bar on narrow ones. */
+.sf-layout { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: var(--cds-gap-xl); align-items: start; }
+.sf-main { display: grid; gap: var(--cds-gap-xl); min-width: 0; }
+.sf-main > section { scroll-margin-top: 16px; }
+.sf-side { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 16px); display: flex; flex-direction: column; gap: 6px; background: var(--color-panel); border: 1px solid var(--color-border-line); border-top: 3px solid var(--sf-cisco); border-radius: var(--cds-radius); padding: var(--cds-pad-md); z-index: 5; }
+.sf-side-title { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); text-transform: uppercase; letter-spacing: .05em; padding: 0 8px 4px; }
+.sf-tab { display: flex; align-items: center; gap: 8px; width: 100%; text-align: left; font: inherit; color: var(--color-fg); background: transparent; border: 0; border-radius: var(--cds-radius); padding: 9px 10px; cursor: pointer; }
+.sf-tab:hover { background: var(--sf-tint-blue); }
+.sf-tab:focus-visible { outline: 2px solid var(--sf-cisco); outline-offset: 1px; }
+.sf-tab.is-active { background: var(--sf-cisco-deep); color: #ffffff; font-weight: var(--cds-font-weight-medium); }
+.sf-tab-label { flex: 1; min-width: 0; }
+.sf-tab-mark { width: 8px; height: 8px; border-radius: 2px; flex: none; }
+.sf-mark-blue { background: var(--sf-cisco); } .sf-mark-green { background: var(--sf-hpe); }
+.sf-tab.is-active .sf-tab-mark { background: #ffffff; }
+.sf-tab-badge { font-size: var(--cds-font-size-caption); font-variant-numeric: tabular-nums; padding: 1px 8px; border-radius: 999px; background: var(--sf-tint-blue); color: var(--sf-cisco-deep); }
+.sf-tab.is-active .sf-tab-badge { background: rgba(255, 255, 255, .2); color: #ffffff; }
+.sf-tab-top { margin-top: 6px; border-top: 1px solid var(--color-border-line); border-radius: 0; color: var(--color-fg-muted); font-size: var(--cds-font-size-caption); }
+.sf-tab-top:hover { border-radius: var(--cds-radius); }
+@media (max-width: 860px) {
+  .sf-layout { grid-template-columns: minmax(0, 1fr); gap: var(--cds-gap-md); }
+  .sf-side { flex-direction: row; overflow-x: auto; padding: 6px; gap: 4px; top: env(safe-area-inset-top, 0px); }
+  .sf-side-title, .sf-tab-top { display: none; }
+  .sf-tab { width: auto; flex: none; white-space: nowrap; padding: 8px 10px; }
+  .sf-main > section { scroll-margin-top: 72px; }
+}
 .sf-card { background: var(--color-panel); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); padding: var(--cds-pad-lg); display: grid; gap: var(--cds-gap-md); min-width: 0; }
 .sf-filters { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: var(--cds-gap-md); }
 .sf-field { display: grid; gap: var(--cds-gap-xs); min-width: 0; }
@@ -159,6 +184,29 @@ window.dash = (function () {
   </header>
 
   <p class="sf-note" id="sf-caveat">Checked on 13 Nov 2026 against the Cisco datasheets, HPE Aruba QuickSpecs, HPE-hosted Juniper datasheets and Fortinet FortiSwitch datasheets linked in each row. FortiSwitch rows are partly verified because Fortinet lists routing and MACsec features per family, not per model, and FortiSwitches are managed from a FortiGate (FortiLink) rather than stacked. The Verified column says how much of a row was confirmed, and a dash means the datasheet doesn't state that value. Juniper EX4300 is no longer published, so its rows are unverified. Aruba has no CX 6001, 6002 or 6003; the CX 6000 family is the 6000, 6100, 6200, 6300 and 6400 series, all listed here.</p>
+
+  <div class="sf-layout">
+  <nav class="sf-side" id="sf-nav" aria-label="Page sections">
+    <span class="sf-side-title">Jump to</span>
+    <button type="button" class="sf-tab is-active" data-target="requirements" aria-current="true">
+      <span class="sf-tab-mark sf-mark-blue" aria-hidden="true"></span>
+      <span class="sf-tab-label">Requirements</span>
+    </button>
+    <button type="button" class="sf-tab" data-target="matches">
+      <span class="sf-tab-mark sf-mark-blue" aria-hidden="true"></span>
+      <span class="sf-tab-label">Matching models</span>
+      <b class="sf-tab-badge" data-draw="navcount">—</b>
+    </button>
+    <button type="button" class="sf-tab" data-target="compare">
+      <span class="sf-tab-mark sf-mark-green" aria-hidden="true"></span>
+      <span class="sf-tab-label">Feature comparison</span>
+      <b class="sf-tab-badge" data-draw="navcmp">—</b>
+    </button>
+    <button type="button" class="sf-tab sf-tab-top" data-target="sf-head">
+      <span class="sf-tab-label">↑ Back to top</span>
+    </button>
+  </nav>
+  <div class="sf-main">
 
   <section class="sf-card" id="requirements" aria-labelledby="req-h">
     <div class="sf-bar">
@@ -393,6 +441,8 @@ window.dash = (function () {
       </div>
     </div>
   </section>
+  </div>
+  </div>
 </div>
 
 <script>
@@ -439,7 +489,7 @@ window.sfFilter = function (rows) {
   });
 };
 
-window.sfRedraw = function () { ['results', 'count', 'vendorsum'].forEach((n) => dash.draw(n)); };
+window.sfRedraw = function () { ['results', 'count', 'vendorsum', 'navcount'].forEach((n) => dash.draw(n)); };
 
 (function () {
   const redraw = () => window.sfRedraw();
@@ -457,7 +507,34 @@ window.sfRedraw = function () { ['results', 'count', 'vendorsum'].forEach((n) =>
     redraw();
   });
   const clear = document.getElementById('cmp-clear');
-  if (clear) clear.addEventListener('click', () => { window.sfState.sel = []; dash.draw('cmp'); dash.draw('results'); });
+  if (clear) clear.addEventListener('click', () => { window.sfState.sel = []; dash.draw('cmp'); dash.draw('results'); dash.draw('navcmp'); });
+
+  /* Side tabs: jump to a section and highlight the one in view. */
+  const tabs = [...document.querySelectorAll('.sf-tab')];
+  const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const setActive = (id) => tabs.forEach((t) => {
+    const on = t.dataset.target === id;
+    t.classList.toggle('is-active', on);
+    if (on) t.setAttribute('aria-current', 'true'); else t.removeAttribute('aria-current');
+  });
+  tabs.forEach((t) => t.addEventListener('click', () => {
+    const el = document.getElementById(t.dataset.target);
+    if (!el) return;
+    el.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+    if (t.dataset.target !== 'sf-head') setActive(t.dataset.target);
+  }));
+  const ids = ['requirements', 'matches', 'compare'];
+  const secs = ids.map((id) => document.getElementById(id)).filter(Boolean);
+  if ('IntersectionObserver' in window && secs.length) {
+    const seen = new Map();
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((e) => seen.set(e.target.id, e.isIntersecting ? e.intersectionRatio : 0));
+      let best = null, bestR = 0;
+      ids.forEach((id) => { const r = seen.get(id) || 0; if (r > bestR) { bestR = r; best = id; } });
+      if (best) setActive(best);
+    }, { root: document, rootMargin: '-15% 0px -45% 0px', threshold: [0, 0.1, 0.25, 0.5, 0.75, 1] });
+    secs.forEach((s) => io.observe(s));
+  }
   document.querySelectorAll('.sf-sort').forEach((th) => {
     const go = () => {
       const s = window.sfState.sort, k = th.dataset.k;
@@ -487,6 +564,15 @@ window.sfRedraw = function () { ['results', 'count', 'vendorsum'].forEach((n) =>
   dash.draw('count', (el) => {
     const d = dash.data('specs');
     el.textContent = d.status === 'ok' ? fmt(window.sfFilter(d.data).length) : '—';
+  });
+
+  dash.draw('navcount', (el) => {
+    const d = dash.data('specs');
+    el.textContent = d.status === 'ok' ? fmt(window.sfFilter(d.data).length) : '—';
+  });
+
+  dash.draw('navcmp', (el) => {
+    el.textContent = window.sfState.sel.length + '/4';
   });
 
   dash.draw('vendorsum', (el) => {
@@ -544,6 +630,7 @@ window.sfRedraw = function () { ['results', 'count', 'vendorsum'].forEach((n) =>
         else S.sel = S.sel.filter((m) => m !== r.model);
         dash.draw('results');
         dash.draw('cmp');
+        dash.draw('navcmp');
       });
       tdc.append(cb);
       tr.append(tdc);
