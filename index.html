@@ -1182,8 +1182,8 @@ window.apRedraw = function () { ['apresults', 'apcount', 'apvendorsum', 'navap']
     if (apCmp.length) add('AP comparison', cmp(AP, apCmp), [22].concat(apCmp.map(() => 34)));
     add('About', [['Enterprise Campus Wired and Wireless Spec Finder'], ['Exported', new Date().toLocaleString()], ['Switches exported', swRows.length], ['Access points exported', apRows.length],
       ['Note', 'Rows reflect the filters and sort order on the page. Confirm figures on the linked vendor datasheet before quoting.'],
-      ['Source', 'https://mrevelino.github.io/switch-spec-finder/']], [24, 90]);
-    XLSX.writeFile(wb, 'switch-spec-finder-' + stamp() + '.xlsx');
+      ['Source', 'https://mrevelino.github.io/wired-wireless-spec-finder/']], [24, 90]);
+    XLSX.writeFile(wb, 'wired-wireless-spec-finder-' + stamp() + '.xlsx');
   }
 
   async function toPdf() {
@@ -1204,7 +1204,7 @@ window.apRedraw = function () { ['apresults', 'apcount', 'apvendorsum', 'navap']
       styles: { fontSize: 7, cellPadding: 3, overflow: 'linebreak', textColor: [23, 32, 43] },
       headStyles: { fillColor: color, textColor: 255, fontStyle: 'bold' }, alternateRowStyles: { fillColor: [244, 247, 250] },
       margin: { left: 36, right: 36 } }, extra || {}));
-    const when = 'Exported ' + new Date().toLocaleString() + ' from https://mrevelino.github.io/switch-spec-finder/ - rows follow the page filters. Confirm figures on the vendor datasheet.';
+    const when = 'Exported ' + new Date().toLocaleString() + ' from https://mrevelino.github.io/wired-wireless-spec-finder/ - rows follow the page filters. Confirm figures on the vendor datasheet.';
     heading('Matching switches (' + swRows.length + ')', when);
     tbl(SW_PDF.map((k) => label(SW, k)), swRows.map((r) => SW_PDF.map((k) => txt(r[k]))), blue);
     if (swCmp.length) {
@@ -1219,7 +1219,7 @@ window.apRedraw = function () { ['apresults', 'apcount', 'apvendorsum', 'navap']
     }
     const n = doc.getNumberOfPages();
     for (let i = 1; i <= n; i++) { doc.setPage(i); doc.setFontSize(8); doc.setTextColor(120); doc.text('Enterprise Campus Wired and Wireless Spec Finder - page ' + i + ' of ' + n, 36, doc.internal.pageSize.getHeight() - 18); }
-    doc.save('switch-spec-finder-' + stamp() + '.pdf');
+    doc.save('wired-wireless-spec-finder-' + stamp() + '.pdf');
   }
 
   const wire = (id, fn, name) => {
@@ -1237,9 +1237,9 @@ window.apRedraw = function () { ['apresults', 'apcount', 'apvendorsum', 'navap']
 })();
 </script>
 
-<p class="sf-foot">Data: switches <a href="data/switch_specs.json">JSON</a> / <a href="data/switch_specs.csv">CSV</a> · access points <a href="data/access_points.json">JSON</a> / <a href="data/access_points.csv">CSV</a> · Sources and method in the <a href="https://github.com/mrevelino/switch-spec-finder#readme">README</a>. Vendor and product names belong to their owners; always confirm figures on the linked datasheet.</p>
+<p class="sf-foot">Data: switches <a href="data/switch_specs.json">JSON</a> / <a href="data/switch_specs.csv">CSV</a> · access points <a href="data/access_points.json">JSON</a> / <a href="data/access_points.csv">CSV</a> · Sources and method in the <a href="https://github.com/mrevelino/wired-wireless-spec-finder#readme">README</a>. Vendor and product names belong to their owners; always confirm figures on the linked datasheet.</p>
 <div class="sf-foot sf-visits">
-  <img src="https://hits.sh/mrevelino.github.io/switch-spec-finder.svg?view=today-total&amp;label=Page%20views&amp;color=049fd9&amp;labelColor=0d274d" alt="Page views today and in total" height="20">
+  <img src="https://hits.sh/mrevelino.github.io/wired-wireless-spec-finder.svg?view=today-total&amp;label=Page%20views&amp;color=049fd9&amp;labelColor=0d274d" alt="Page views today and in total" height="20">
   <span>Page views today / all time. Every page load counts, including repeat visits; counted by <a href="https://hits.sh/" rel="noopener">hits.sh</a>.</span>
 </div>
 <p class="sf-foot sf-load-error" id="load-error" hidden>The spec data could not be loaded. Open the page through a web server (for example GitHub Pages or <code>python -m http.server</code>), not as a local file.</p>

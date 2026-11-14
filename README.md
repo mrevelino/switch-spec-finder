@@ -14,9 +14,9 @@ and wireless access points:
 - **Juniper (HPE Mist)** AP17 / AP27 / AP36 / AP47 / AP66 (Wi-Fi 7), AP24 / AP45 / AP64 (Wi-Fi 6E), AP32 / AP33 / AP43 (Wi-Fi 6)
 - **Fortinet FortiAP** 221K / 231K / 241K / 23JK / 244K / 222KL / 441K (Wi-Fi 7), 234G / 432G (outdoor Wi-Fi 6E)
 
-**Live page:** https://mrevelino.github.io/switch-spec-finder/
+**Live page:** https://mrevelino.github.io/wired-wireless-spec-finder/
 
-![Page views today / all time](https://hits.sh/mrevelino.github.io/switch-spec-finder.svg?view=today-total&label=Page%20views&color=049fd9&labelColor=0d274d)
+![Page views today / all time](https://hits.sh/mrevelino.github.io/wired-wireless-spec-finder.svg?view=today-total&label=Page%20views&color=049fd9&labelColor=0d274d)
 
 The page-view badge (also at the foot of the live page) comes from [hits.sh](https://hits.sh/). It counts every page load, including repeat visits, so it is not a count of unique people. Opening this README also counts as a view.
 
