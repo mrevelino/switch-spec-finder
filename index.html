@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Enterprise Campus Switch Spec Finder</title>
+<title>Enterprise Campus Wired and Wireless Spec Finder</title>
 <meta name="description" content="Search and compare Cisco Catalyst, HPE Aruba CX, Juniper EX and Fortinet FortiSwitch switches and Cisco, Aruba, Juniper Mist and FortiAP access points; export to Excel or PDF.">
 <style>
 :root {
@@ -187,7 +187,7 @@ window.dash = (function () {
 
 <div class="sf">
   <header id="sf-head" class="sf-head">
-    <h1>Enterprise Campus Switch Spec Finder</h1>
+    <h1>Enterprise Campus Wired and Wireless Spec Finder</h1>
     <div class="sf-brandbar" aria-hidden="true"><span class="b1"></span><span class="b2"></span><span class="b3"></span></div>
     <p class="sf-lede"><b data-draw="count">—</b> of <b data-draw="total" data-source="total_models">—</b> Cisco Catalyst, HPE Aruba CX, Juniper EX and Fortinet FortiSwitch models meet the requirements below.</p>
   </header>
@@ -199,7 +199,7 @@ window.dash = (function () {
     <span class="sf-side-title">Jump to</span>
     <button type="button" class="sf-tab is-active" data-target="requirements" aria-current="true">
       <span class="sf-tab-mark sf-mark-blue" aria-hidden="true"></span>
-      <span class="sf-tab-label">Requirements</span>
+      <span class="sf-tab-label">Switches</span>
     </button>
     <button type="button" class="sf-tab" data-target="matches">
       <span class="sf-tab-mark sf-mark-blue" aria-hidden="true"></span>
@@ -236,7 +236,7 @@ window.dash = (function () {
 
   <section class="sf-card" id="requirements" aria-labelledby="req-h">
     <div class="sf-bar">
-      <h2 id="req-h">Requirements</h2>
+      <h2 id="req-h">Switches</h2>
       <button type="button" class="sf-btn" id="f-reset">Reset filters</button>
     </div>
     <div class="sf-filters">
@@ -1180,7 +1180,7 @@ window.apRedraw = function () { ['apresults', 'apcount', 'apvendorsum', 'navap']
     if (swCmp.length) add('Switch comparison', cmp(SW, swCmp), [22].concat(swCmp.map(() => 34)));
     add('Access points', table(AP, apRows), AP.map((d) => (d[0] === 'notes' ? 60 : d[0] === 'datasheet' ? 50 : d[0] === 'radios' ? 40 : Math.max(10, d[1].length + 2))));
     if (apCmp.length) add('AP comparison', cmp(AP, apCmp), [22].concat(apCmp.map(() => 34)));
-    add('About', [['Enterprise Campus Switch Spec Finder'], ['Exported', new Date().toLocaleString()], ['Switches exported', swRows.length], ['Access points exported', apRows.length],
+    add('About', [['Enterprise Campus Wired and Wireless Spec Finder'], ['Exported', new Date().toLocaleString()], ['Switches exported', swRows.length], ['Access points exported', apRows.length],
       ['Note', 'Rows reflect the filters and sort order on the page. Confirm figures on the linked vendor datasheet before quoting.'],
       ['Source', 'https://mrevelino.github.io/switch-spec-finder/']], [24, 90]);
     XLSX.writeFile(wb, 'switch-spec-finder-' + stamp() + '.xlsx');
@@ -1218,7 +1218,7 @@ window.apRedraw = function () { ['apresults', 'apcount', 'apvendorsum', 'navap']
       tbl(['Spec'].concat(apCmp.map((r) => r.model)), AP.slice(1).map((d) => [d[1]].concat(apCmp.map((r) => txt(r[d[0]])))), green, { columnStyles: { 0: { fontStyle: 'bold', cellWidth: 110 } } });
     }
     const n = doc.getNumberOfPages();
-    for (let i = 1; i <= n; i++) { doc.setPage(i); doc.setFontSize(8); doc.setTextColor(120); doc.text('Enterprise Campus Switch Spec Finder - page ' + i + ' of ' + n, 36, doc.internal.pageSize.getHeight() - 18); }
+    for (let i = 1; i <= n; i++) { doc.setPage(i); doc.setFontSize(8); doc.setTextColor(120); doc.text('Enterprise Campus Wired and Wireless Spec Finder - page ' + i + ' of ' + n, 36, doc.internal.pageSize.getHeight() - 18); }
     doc.save('switch-spec-finder-' + stamp() + '.pdf');
   }
 
