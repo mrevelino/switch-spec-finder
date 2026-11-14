@@ -706,7 +706,7 @@ window.sfRedraw = function () { ['results', 'count', 'vendorsum', 'navcount'].fo
   }));
   const atBottom = () => {
     const se = document.scrollingElement || document.documentElement;
-    return se.scrollHeight - (se.scrollTop + window.innerHeight) < 8;
+    return se.scrollTop > 0 && se.scrollHeight - (se.scrollTop + window.innerHeight) < 8;
   };
   /* The section in view is the last one whose top has passed 30% of the window height. */
   const ids = ['requirements', 'matches', 'compare', 'aps', 'apcompare'];
