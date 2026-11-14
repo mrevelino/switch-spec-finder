@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Enterprise Campus Switch Spec Finder</title>
-<meta name="description" content="Search and compare Cisco Catalyst 9200/9300/9400/9500, HPE Aruba CX 6000-6400 and Juniper EX switches by ports, PoE, uplinks, capacity, memory, MAC and route scale.">
+<meta name="description" content="Search and compare Cisco Catalyst, HPE Aruba CX, Juniper EX and Fortinet FortiSwitch switches and Cisco, Aruba, Juniper Mist and FortiAP access points; export to Excel or PDF.">
 <style>
 :root {
   --color-fg: #17202b; --color-fg-muted: #5b6675; --color-bg: #f6f7f9; --color-panel: #ffffff;
@@ -33,7 +33,7 @@ html, body { margin: 0; background: #f4f7fa; color: var(--color-fg); font: 14px/
 <script>
 /* Minimal stand-in for the Claude dashboard runtime: data(), calc(), draw(), colors. */
 window.dash = (function () {
-  const store = { specs: { status: 'loading', data: [] } };
+  const store = { specs: { status: 'loading', data: [] }, aps: { status: 'loading', data: [] } };
   const calcs = {}, draws = {};
   function data(id) {
     const c = calcs[id];
@@ -52,7 +52,7 @@ window.dash = (function () {
     });
   }
   return {
-    data, draw,
+    data, draw, standalone: true,
     calc: (id, opts) => { calcs[id] = opts; },
     colors: ['var(--series-1)', 'var(--series-2)', 'var(--series-3)'],
     _set(id, value) { store[id] = value; Object.keys(draws).forEach((n) => draw(n)); }
@@ -116,10 +116,18 @@ window.dash = (function () {
 .sf-tab.is-active .sf-tab-badge { background: rgba(255, 255, 255, .2); color: #ffffff; }
 .sf-tab-top { margin-top: 6px; border-top: 1px solid var(--color-border-line); border-radius: 0; color: var(--color-fg-muted); font-size: var(--cds-font-size-caption); }
 .sf-tab-top:hover { border-radius: var(--cds-radius); }
+.sf [hidden] { display: none !important; }
+.sf-side-sub { margin-top: 8px; padding-top: 10px; border-top: 1px solid var(--color-border-line); }
+.sf-export { display: grid; gap: 6px; margin-top: 8px; padding-top: 10px; border-top: 1px solid var(--color-border-line); }
+.sf-export-btn { width: 100%; text-align: left; font-size: var(--cds-font-size-caption); }
+.sf-export-btn:disabled { opacity: .6; cursor: progress; }
+.sf-export-msg { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); padding: 0 4px; }
 @media (max-width: 860px) {
   .sf-layout { grid-template-columns: minmax(0, 1fr); gap: var(--cds-gap-md); }
   .sf-side { flex-direction: row; overflow-x: auto; padding: 6px; gap: 4px; top: env(safe-area-inset-top, 0px); }
-  .sf-side-title, .sf-tab-top { display: none; }
+  .sf-side-title, .sf-tab-top, .sf-export-msg { display: none; }
+  .sf-export { display: flex; margin: 0; padding: 0 0 0 6px; border-top: 0; border-left: 1px solid var(--color-border-line); gap: 4px; }
+  .sf-export-btn { width: auto; white-space: nowrap; }
   .sf-tab { width: auto; flex: none; white-space: nowrap; padding: 8px 10px; }
   .sf-main > section { scroll-margin-top: 72px; }
 }
@@ -184,7 +192,7 @@ window.dash = (function () {
     <p class="sf-lede"><b data-draw="count">—</b> of <b data-draw="total" data-source="total_models">—</b> Cisco Catalyst, HPE Aruba CX, Juniper EX and Fortinet FortiSwitch models meet the requirements below.</p>
   </header>
 
-  <p class="sf-note" id="sf-caveat">Checked on 13 Nov 2026 against the Cisco datasheets, HPE Aruba QuickSpecs, HPE-hosted Juniper datasheets and Fortinet FortiSwitch datasheets linked in each row. FortiSwitch rows are partly verified because Fortinet lists routing and MACsec features per family, not per model, and FortiSwitches are managed from a FortiGate (FortiLink) rather than stacked. The Verified column says how much of a row was confirmed, and a dash means the datasheet doesn't state that value. Juniper EX4300 is no longer published, so its rows are unverified. Aruba has no CX 6001, 6002 or 6003; the CX 6000 family is the 6000, 6100, 6200, 6300 and 6400 series, all listed here.</p>
+  <p class="sf-note" id="sf-caveat">Checked on 13 Nov 2026 against the Cisco datasheets, HPE Aruba QuickSpecs, HPE-hosted Juniper datasheets and Fortinet FortiSwitch datasheets linked in each row. FortiSwitch rows are partly verified because Fortinet lists routing and MACsec features per family, not per model, and FortiSwitches are managed from a FortiGate (FortiLink) rather than stacked. The Verified column says how much of a row was confirmed, and a dash means the datasheet doesn't state that value. Juniper EX4300 is no longer published, so its rows are unverified. Aruba has no CX 6001, 6002 or 6003; the CX 6000 family is the 6000, 6100, 6200, 6300 and 6400 series, all listed here. Access points were checked on 14 Nov 2026 against the Cisco, HPE Aruba, HPE Mist (Juniper) and Fortinet AP datasheets.</p>
 
   <div class="sf-layout">
   <nav class="sf-side" id="sf-nav" aria-label="Page sections">
@@ -203,6 +211,23 @@ window.dash = (function () {
       <span class="sf-tab-label">Feature comparison</span>
       <b class="sf-tab-badge" data-draw="navcmp">—</b>
     </button>
+    <span class="sf-side-title sf-side-sub">Wireless</span>
+    <button type="button" class="sf-tab" data-target="aps">
+      <span class="sf-tab-mark sf-mark-blue" aria-hidden="true"></span>
+      <span class="sf-tab-label">Access points</span>
+      <b class="sf-tab-badge" data-draw="navap">—</b>
+    </button>
+    <button type="button" class="sf-tab" data-target="apcompare">
+      <span class="sf-tab-mark sf-mark-green" aria-hidden="true"></span>
+      <span class="sf-tab-label">AP comparison</span>
+      <b class="sf-tab-badge" data-draw="navapcmp">—</b>
+    </button>
+    <div class="sf-export" id="sf-export" hidden>
+      <span class="sf-side-title">Export</span>
+      <button type="button" class="sf-btn sf-export-btn" id="exp-xlsx">Excel (.xlsx)</button>
+      <button type="button" class="sf-btn sf-export-btn" id="exp-pdf">PDF</button>
+      <span class="sf-export-msg" id="exp-msg" role="status"></span>
+    </div>
     <button type="button" class="sf-tab sf-tab-top" data-target="sf-head">
       <span class="sf-tab-label">↑ Back to top</span>
     </button>
@@ -442,6 +467,150 @@ window.dash = (function () {
       </div>
     </div>
   </section>
+
+  <section class="sf-card" id="aps" aria-labelledby="ap-h">
+    <div class="sf-bar">
+      <h2 id="ap-h">Access points</h2>
+      <button type="button" class="sf-btn" id="a-reset">Reset AP filters</button>
+    </div>
+    <p class="sf-muted"><b data-draw="apcount">—</b> of <b data-draw="aptotal" data-source="total_aps">—</b> Cisco, HPE Aruba, Juniper Mist and Fortinet access points match. Tick up to 4 to compare them below.</p>
+    <div class="sf-filters" id="ap-filters">
+      <div class="sf-field sf-wide">
+        <span class="sf-legend">Vendor</span>
+        <div class="sf-checks">
+          <label><input type="checkbox" class="ap-vendor" id="a-v-cisco" value="Cisco" checked> Cisco</label>
+          <label><input type="checkbox" class="ap-vendor" id="a-v-aruba" value="HPE Aruba" checked> HPE Aruba</label>
+          <label><input type="checkbox" class="ap-vendor" id="a-v-juniper" value="Juniper" checked> Juniper Mist</label>
+          <label><input type="checkbox" class="ap-vendor" id="a-v-fortinet" value="Fortinet" checked> Fortinet FortiAP</label>
+        </div>
+      </div>
+      <div class="sf-field">
+        <label for="a-q">Search model or family</label>
+        <input type="search" id="a-q" placeholder="e.g. CW9176, AP-655, AP47">
+      </div>
+      <div class="sf-field">
+        <label for="a-wifi">Wi-Fi generation</label>
+        <select class="dash-select" id="a-wifi">
+          <option value="">Any</option>
+          <option value="6">Wi-Fi 6 or newer</option>
+          <option value="6.5">Wi-Fi 6E or newer</option>
+          <option value="7">Wi-Fi 7</option>
+        </select>
+      </div>
+      <div class="sf-field">
+        <label for="a-env">Environment</label>
+        <select class="dash-select" id="a-env">
+          <option value="">Any</option>
+          <option value="Indoor">Indoor (ceiling)</option>
+          <option value="Wall plate">Wall plate</option>
+          <option value="Outdoor">Outdoor</option>
+        </select>
+      </div>
+      <div class="sf-field">
+        <label for="a-rate">Max data rate</label>
+        <select class="dash-select" id="a-rate">
+          <option value="">Any</option>
+          <option value="2">2 Gbps or more</option>
+          <option value="4">4 Gbps or more</option>
+          <option value="8">8 Gbps or more</option>
+          <option value="15">15 Gbps or more</option>
+        </select>
+      </div>
+      <div class="sf-field">
+        <label for="a-up">Uplink speed</label>
+        <select class="dash-select" id="a-up">
+          <option value="">Any</option>
+          <option value="2.5">2.5G or faster</option>
+          <option value="5">5G or faster</option>
+          <option value="10">10G</option>
+        </select>
+      </div>
+      <div class="sf-field">
+        <label for="a-ss">Spatial streams per radio</label>
+        <select class="dash-select" id="a-ss">
+          <option value="">Any</option>
+          <option value="4">4x4 or more</option>
+        </select>
+      </div>
+      <div class="sf-field sf-wide">
+        <span class="sf-legend">Must have</span>
+        <div class="sf-checks">
+          <label><input type="checkbox" class="ap-feat" id="a-6g" value="6g"> 6 GHz band</label>
+          <label><input type="checkbox" class="ap-feat" id="a-dual" value="dual"> Two Ethernet uplinks</label>
+          <label><input type="checkbox" class="ap-feat" id="a-at" value="at"> Full function on 802.3at PoE</label>
+          <label><input type="checkbox" class="ap-feat" id="a-ble" value="ble"> BLE / IoT radio</label>
+          <label><input type="checkbox" class="ap-feat" id="a-usb" value="usb"> USB port</label>
+          <label><input type="checkbox" class="ap-feat" id="a-ver" value="ver"> Fully verified rows only</label>
+        </div>
+      </div>
+    </div>
+    <div class="sf-chips" data-draw="apvendorsum" aria-label="AP matches by vendor"></div>
+    <div class="sf-scroll">
+      <table class="sf-table" id="ap-table" data-source="aps" data-row-key="model">
+        <thead>
+          <tr>
+            <th scope="col">Compare</th>
+            <th scope="col" class="ap-sort sf-sort" tabindex="0" data-k="model" data-field="model">Model</th>
+            <th scope="col" class="ap-sort sf-sort" tabindex="0" data-k="vendor" data-field="vendor">Vendor</th>
+            <th scope="col" class="ap-sort sf-sort" tabindex="0" data-k="wifi" data-field="wifi">Wi-Fi</th>
+            <th scope="col" class="ap-sort sf-sort" tabindex="0" data-k="environment" data-field="environment">Environment</th>
+            <th scope="col" data-field="radios">Radios</th>
+            <th scope="col" class="ap-sort sf-sort n" tabindex="0" data-k="max_rate_gbps" data-field="max_rate_gbps" aria-sort="descending">Max rate (Gbps)</th>
+            <th scope="col" data-field="uplinks">Uplinks</th>
+            <th scope="col" class="ap-sort sf-sort n" tabindex="0" data-k="uplink_max_gbps" data-field="uplink_max_gbps">Uplink (Gbps)</th>
+            <th scope="col" data-field="poe">PoE</th>
+            <th scope="col" class="ap-sort sf-sort n" tabindex="0" data-k="max_power_w" data-field="max_power_w">Max power (W)</th>
+            <th scope="col" class="ap-sort sf-sort" tabindex="0" data-k="verified" data-field="verified">Verified</th>
+            <th scope="col">Datasheet</th>
+          </tr>
+        </thead>
+        <tbody data-draw="apresults"></tbody>
+      </table>
+    </div>
+    <p class="sf-muted" id="ap-no-match" hidden>No access point meets every requirement. Loosen one of the filters above.</p>
+  </section>
+
+  <section class="sf-card" id="apcompare" aria-labelledby="apcmp-h">
+    <div class="sf-bar">
+      <h2 id="apcmp-h">AP comparison</h2>
+      <button type="button" class="sf-btn" id="apcmp-clear">Clear comparison</button>
+    </div>
+    <p class="sf-muted" id="apcmp-empty" hidden>Tick access points in the table above to compare them side by side.</p>
+    <p class="sf-muted" id="apcmp-hint" hidden>The best value in each numeric row is shown in green.</p>
+    <div class="sf-cmp-wrap">
+      <div class="sf-cmp" id="apcmp-grid" data-source="aps">
+        <div class="sf-cmp-row sf-cmp-head"><div class="sf-cmp-label">Model</div><div class="sf-cmp-vals" data-draw="apcmp" data-f="model"></div></div>
+        <div class="sf-cmp-row"><div class="sf-cmp-label">Vendor</div><div class="sf-cmp-vals" data-draw="apcmp" data-f="vendor"></div></div>
+        <div class="sf-cmp-row"><div class="sf-cmp-label">Family</div><div class="sf-cmp-vals" data-draw="apcmp" data-f="family"></div></div>
+        <div class="sf-cmp-row"><div class="sf-cmp-label">Environment</div><div class="sf-cmp-vals" data-draw="apcmp" data-f="environment"></div></div>
+        <div class="sf-cmp-row"><div class="sf-cmp-label">Management</div><div class="sf-cmp-vals" data-draw="apcmp" data-f="management"></div></div>
+
+        <div class="sf-cmp-group">Radio</div>
+        <div class="sf-cmp-row"><div class="sf-cmp-label">Wi-Fi generation</div><div class="sf-cmp-vals" data-draw="apcmp" data-f="wifi"></div></div>
+        <div class="sf-cmp-row"><div class="sf-cmp-label">Bands</div><div class="sf-cmp-vals" data-draw="apcmp" data-f="bands"></div></div>
+        <div class="sf-cmp-row"><div class="sf-cmp-label">6 GHz</div><div class="sf-cmp-vals" data-draw="apcmp" data-f="has_6ghz"></div></div>
+        <div class="sf-cmp-row"><div class="sf-cmp-label">Radios</div><div class="sf-cmp-vals" data-draw="apcmp" data-f="radios"></div></div>
+        <div class="sf-cmp-row"><div class="sf-cmp-label">Max spatial streams per radio</div><div class="sf-cmp-vals" data-draw="apcmp" data-f="max_ss" data-best="max"></div></div>
+        <div class="sf-cmp-row"><div class="sf-cmp-label">Max data rate (Gbps)</div><div class="sf-cmp-vals" data-draw="apcmp" data-f="max_rate_gbps" data-best="max"></div></div>
+        <div class="sf-cmp-row"><div class="sf-cmp-label">BLE / IoT radio</div><div class="sf-cmp-vals" data-draw="apcmp" data-f="ble"></div></div>
+
+        <div class="sf-cmp-group">Wired and power</div>
+        <div class="sf-cmp-row"><div class="sf-cmp-label">Uplinks</div><div class="sf-cmp-vals" data-draw="apcmp" data-f="uplinks"></div></div>
+        <div class="sf-cmp-row"><div class="sf-cmp-label">Uplink ports</div><div class="sf-cmp-vals" data-draw="apcmp" data-f="uplink_ports" data-best="max"></div></div>
+        <div class="sf-cmp-row"><div class="sf-cmp-label">Max uplink speed (Gbps)</div><div class="sf-cmp-vals" data-draw="apcmp" data-f="uplink_max_gbps" data-best="max"></div></div>
+        <div class="sf-cmp-row"><div class="sf-cmp-label">PoE requirement</div><div class="sf-cmp-vals" data-draw="apcmp" data-f="poe"></div></div>
+        <div class="sf-cmp-row"><div class="sf-cmp-label">Full function on 802.3at</div><div class="sf-cmp-vals" data-draw="apcmp" data-f="full_on_at"></div></div>
+        <div class="sf-cmp-row"><div class="sf-cmp-label">Max power draw (W)</div><div class="sf-cmp-vals" data-draw="apcmp" data-f="max_power_w"></div></div>
+        <div class="sf-cmp-row"><div class="sf-cmp-label">USB</div><div class="sf-cmp-vals" data-draw="apcmp" data-f="usb"></div></div>
+        <div class="sf-cmp-row"><div class="sf-cmp-label">IP rating</div><div class="sf-cmp-vals" data-draw="apcmp" data-f="ip_rating"></div></div>
+
+        <div class="sf-cmp-group">Source</div>
+        <div class="sf-cmp-row"><div class="sf-cmp-label">Verification</div><div class="sf-cmp-vals" data-draw="apcmp" data-f="verified"></div></div>
+        <div class="sf-cmp-row"><div class="sf-cmp-label">Datasheet notes</div><div class="sf-cmp-vals" data-draw="apcmp" data-f="notes"></div></div>
+        <div class="sf-cmp-row"><div class="sf-cmp-label">Datasheet</div><div class="sf-cmp-vals" data-draw="apcmp" data-f="datasheet"></div></div>
+      </div>
+    </div>
+  </section>
   </div>
   </div>
 </div>
@@ -490,6 +659,17 @@ window.sfFilter = function (rows) {
   });
 };
 
+window.sfSortRows = function (rows, sort) {
+  const k = sort.key, dir = sort.dir;
+  return rows.slice().sort((a, b) => {
+    const x = a[k], y = b[k];
+    if (x == null && y == null) return 0;
+    if (x == null) return 1;
+    if (y == null) return -1;
+    return (typeof x === 'number' && typeof y === 'number' ? x - y : String(x).localeCompare(String(y))) * dir;
+  });
+};
+
 window.sfRedraw = function () { ['results', 'count', 'vendorsum', 'navcount'].forEach((n) => dash.draw(n)); };
 
 (function () {
@@ -529,25 +709,25 @@ window.sfRedraw = function () { ['results', 'count', 'vendorsum', 'navcount'].fo
     return se.scrollHeight - (se.scrollTop + window.innerHeight) < 8;
   };
   /* The section in view is the last one whose top has passed 30% of the window height. */
-  const ids = ['requirements', 'matches', 'compare'];
+  const ids = ['requirements', 'matches', 'compare', 'aps', 'apcompare'];
   let ticking = false;
   const update = () => {
     ticking = false;
     let best = ids[0];
     const line = window.innerHeight * 0.3;
     ids.forEach((id) => { const el = document.getElementById(id); if (el && el.getBoundingClientRect().top <= line) best = id; });
-    if (atBottom()) best = 'compare';
+    if (atBottom()) best = 'apcompare';
     setActive(best);
   };
   window.addEventListener('scroll', () => { if (!ticking) { ticking = true; requestAnimationFrame(update); } }, { passive: true });
   window.addEventListener('resize', update);
   update();
-  document.querySelectorAll('.sf-sort').forEach((th) => {
+  document.querySelectorAll('#results-table .sf-sort').forEach((th) => {
     const go = () => {
       const s = window.sfState.sort, k = th.dataset.k;
       s.dir = s.key === k ? -s.dir : (k === 'model' || k === 'vendor' || k === 'stacking' ? 1 : -1);
       s.key = k;
-      document.querySelectorAll('.sf-sort').forEach((o) => o.removeAttribute('aria-sort'));
+      document.querySelectorAll('#results-table .sf-sort').forEach((o) => o.removeAttribute('aria-sort'));
       th.setAttribute('aria-sort', s.dir > 0 ? 'ascending' : 'descending');
       dash.draw('results');
     };
@@ -608,15 +788,7 @@ window.sfRedraw = function () { ['results', 'count', 'vendorsum', 'navcount'].fo
     const none = document.getElementById('no-match');
     if (d.status !== 'ok') { if (none) none.hidden = true; return; }
     const S = window.sfState;
-    const rows = window.sfFilter(d.data).slice();
-    const k = S.sort.key, dir = S.sort.dir;
-    rows.sort((a, b) => {
-      const x = a[k], y = b[k];
-      if (x == null && y == null) return 0;
-      if (x == null) return 1;
-      if (y == null) return -1;
-      return (typeof x === 'number' && typeof y === 'number' ? x - y : String(x).localeCompare(String(y))) * dir;
-    });
+    const rows = window.sfSortRows(window.sfFilter(d.data), S.sort);
     if (none) none.hidden = rows.length > 0;
     const full = S.sel.length >= 4;
     const cols = [['model'], ['vendor'], ['ports', 'n'], ['port_speed', 'sf-wrap'], ['uplinks', 'sf-wrap'], ['poe'], ['poe_w_port', 'n'],
@@ -733,7 +905,339 @@ window.sfRedraw = function () { ['results', 'count', 'vendorsum', 'navcount'].fo
 })();
 </script>
 
-<p class="sf-foot">Data: <a href="data/switch_specs.json">switch_specs.json</a> · <a href="data/switch_specs.csv">switch_specs.csv</a> · Sources and method in the <a href="https://github.com/mrevelino/switch-spec-finder#readme">README</a>. Vendor and product names belong to their owners; always confirm figures on the linked datasheet.</p>
+<script>
+/* ---------- Access points ---------- */
+dash.calc('total_aps', {
+  title: 'Access points listed',
+  description: 'Number of access point models in the AP list.',
+  inputs: ['aps'],
+  fn: (aps) => aps.length
+});
+
+window.apState = window.apState || { sort: { key: 'max_rate_gbps', dir: -1 }, sel: [] };
+const AP_RANK = { 'Wi-Fi 6': 6, 'Wi-Fi 6E': 6.5, 'Wi-Fi 7': 7 };
+
+window.apFilter = function (rows) {
+  const val = (id) => { const el = document.getElementById(id); return el ? el.value : ''; };
+  const num = (id) => { const v = val(id); return v === '' ? null : +v; };
+  const vendors = [...document.querySelectorAll('.ap-vendor')].filter((c) => c.checked).map((c) => c.value);
+  const feats = [...document.querySelectorAll('.ap-feat')].filter((c) => c.checked).map((c) => c.value);
+  const q = val('a-q').trim().toLowerCase();
+  const env = val('a-env');
+  const wifi = num('a-wifi'), rate = num('a-rate'), up = num('a-up'), ss = num('a-ss');
+  return rows.filter((r) => {
+    if (!vendors.includes(r.vendor)) return false;
+    if (q && !(r.model + ' ' + r.family + ' ' + r.radios).toLowerCase().includes(q)) return false;
+    if (env && r.environment !== env) return false;
+    if (wifi !== null && !((AP_RANK[r.wifi] || 0) >= wifi)) return false;
+    if (rate !== null && !(+r.max_rate_gbps >= rate)) return false;
+    if (up !== null && !(r.uplink_max_gbps != null && +r.uplink_max_gbps >= up)) return false;
+    if (ss !== null && !(+r.max_ss >= ss)) return false;
+    for (const f of feats) {
+      if (f === '6g' && r.has_6ghz !== 'Yes') return false;
+      if (f === 'dual' && !(+r.uplink_ports >= 2)) return false;
+      if (f === 'at' && r.full_on_at !== 'Yes') return false;
+      if (f === 'ble' && r.ble !== 'Yes') return false;
+      if (f === 'usb' && r.usb !== 'Yes') return false;
+      if (f === 'ver' && r.verified !== 'Verified') return false;
+    }
+    return true;
+  });
+};
+
+window.apRedraw = function () { ['apresults', 'apcount', 'apvendorsum', 'navap'].forEach((n) => dash.draw(n)); };
+
+(function () {
+  const redraw = () => window.apRedraw();
+  document.querySelectorAll('#ap-filters input, #ap-filters select').forEach((el) => {
+    el.addEventListener('input', redraw);
+    el.addEventListener('change', redraw);
+  });
+  const reset = document.getElementById('a-reset');
+  if (reset) reset.addEventListener('click', () => {
+    document.querySelectorAll('#ap-filters select, #ap-filters input[type=search]').forEach((el) => { el.value = ''; });
+    document.querySelectorAll('.ap-vendor').forEach((c) => { c.checked = true; });
+    document.querySelectorAll('.ap-feat').forEach((c) => { c.checked = false; });
+    redraw();
+  });
+  const clear = document.getElementById('apcmp-clear');
+  if (clear) clear.addEventListener('click', () => { window.apState.sel = []; ['apcmp', 'apresults', 'navapcmp'].forEach((n) => dash.draw(n)); });
+  document.querySelectorAll('#ap-table .ap-sort').forEach((th) => {
+    const go = () => {
+      const s = window.apState.sort, k = th.dataset.k;
+      s.dir = s.key === k ? -s.dir : (['model', 'vendor', 'environment', 'verified'].includes(k) ? 1 : -1);
+      s.key = k;
+      document.querySelectorAll('#ap-table .ap-sort').forEach((o) => o.removeAttribute('aria-sort'));
+      th.setAttribute('aria-sort', s.dir > 0 ? 'ascending' : 'descending');
+      dash.draw('apresults');
+    };
+    th.addEventListener('click', go);
+    th.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
+  });
+})();
+
+(function () {
+  const fmt = d3.format(',');
+  const show = (v) => (v == null || v === '' ? '—' : (typeof v === 'number' ? fmt(v) : String(v)));
+  const vendorColor = { 'Cisco': 'var(--sf-cisco)', 'HPE Aruba': 'var(--sf-hpe)', 'Juniper': 'var(--sf-juniper)', 'Fortinet': 'var(--sf-fortinet)' };
+  const S = () => window.apState;
+
+  dash.draw('aptotal', (el) => {
+    const d = dash.data('total_aps');
+    el.textContent = d.status === 'ok' && d.data != null ? fmt(d.data) : '—';
+  });
+  dash.draw('apcount', (el) => {
+    const d = dash.data('aps');
+    el.textContent = d.status === 'ok' ? fmt(window.apFilter(d.data).length) : '—';
+  });
+  dash.draw('navap', (el) => {
+    const d = dash.data('aps');
+    el.textContent = d.status === 'ok' ? fmt(window.apFilter(d.data).length) : '—';
+  });
+  dash.draw('navapcmp', (el) => { el.textContent = S().sel.length + '/4'; });
+
+  dash.draw('apvendorsum', (el) => {
+    const d = dash.data('aps');
+    el.replaceChildren();
+    if (d.status !== 'ok') return;
+    const rows = window.apFilter(d.data);
+    ['Cisco', 'HPE Aruba', 'Juniper', 'Fortinet'].forEach((v) => {
+      const chip = document.createElement('span');
+      chip.className = 'sf-chip';
+      const dot = document.createElement('span');
+      dot.className = 'sf-vtag';
+      dot.style.background = vendorColor[v];
+      const name = document.createElement('span');
+      name.textContent = v;
+      const n = document.createElement('b');
+      n.textContent = fmt(rows.filter((r) => r.vendor === v).length);
+      chip.append(dot, name, n);
+      el.append(chip);
+    });
+  });
+
+  dash.draw('apresults', (tbody) => {
+    const d = dash.data('aps');
+    tbody.replaceChildren();
+    const none = document.getElementById('ap-no-match');
+    if (d.status !== 'ok') { if (none) none.hidden = true; return; }
+    const st = S();
+    const rows = window.sfSortRows(window.apFilter(d.data), st.sort);
+    if (none) none.hidden = rows.length > 0;
+    const full = st.sel.length >= 4;
+    const cols = [['model'], ['vendor'], ['wifi'], ['environment'], ['radios', 'sf-wrap'], ['max_rate_gbps', 'n'], ['uplinks', 'sf-wrap'],
+      ['uplink_max_gbps', 'n'], ['poe', 'sf-wrap'], ['max_power_w', 'n'], ['verified']];
+    rows.forEach((r) => {
+      const tr = document.createElement('tr');
+      tr.dataset.key = encodeURIComponent(r.model);
+      const picked = st.sel.includes(r.model);
+      if (picked) tr.className = 'sf-picked';
+      const tdc = document.createElement('td');
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.checked = picked;
+      cb.disabled = !picked && full;
+      cb.setAttribute('aria-label', 'Compare ' + r.model);
+      cb.addEventListener('change', () => {
+        if (cb.checked) { if (!st.sel.includes(r.model) && st.sel.length < 4) st.sel.push(r.model); }
+        else st.sel = st.sel.filter((m) => m !== r.model);
+        ['apresults', 'apcmp', 'navapcmp'].forEach((n) => dash.draw(n));
+      });
+      tdc.append(cb);
+      tr.append(tdc);
+      cols.forEach(([f, cls]) => {
+        const td = document.createElement('td');
+        if (cls) td.className = cls;
+        if (f === 'vendor') {
+          const dot = document.createElement('span');
+          dot.className = 'sf-vtag';
+          dot.style.background = vendorColor[r.vendor];
+          td.append(dot, document.createTextNode(r.vendor));
+        } else if (f === 'model') {
+          const b = document.createElement('b');
+          b.textContent = r.model;
+          td.append(b);
+        } else if (f === 'verified') {
+          const s = document.createElement('span');
+          s.className = 'sf-ver ' + (r.verified === 'Verified' ? 'sf-ver-ok' : r.verified === 'Partly verified' ? 'sf-ver-part' : 'sf-ver-no');
+          s.textContent = show(r.verified);
+          td.append(s);
+        } else {
+          td.textContent = show(r[f]);
+        }
+        tr.append(td);
+      });
+      const tdl = document.createElement('td');
+      if (typeof r.datasheet === 'string' && r.datasheet.startsWith('https://')) {
+        const a = document.createElement('a');
+        a.href = r.datasheet; a.target = '_blank'; a.rel = 'noopener noreferrer';
+        a.textContent = 'Open';
+        tdl.append(a);
+      } else tdl.textContent = '—';
+      tr.append(tdl);
+      tbody.append(tr);
+    });
+  });
+
+  dash.draw('apcmp', (el) => {
+    const d = dash.data('aps');
+    el.replaceChildren();
+    const f = el.dataset.f;
+    const picked = d.status === 'ok' ? S().sel.map((m) => d.data.find((r) => r.model === m)).filter(Boolean) : [];
+    if (f === 'model') {
+      const grid = el.closest('.sf-cmp');
+      if (grid) {
+        grid.style.setProperty('--n', Math.max(1, picked.length));
+        grid.classList.toggle('sf-cmp-isempty', d.status === 'ok' && picked.length === 0);
+      }
+      const empty = document.getElementById('apcmp-empty');
+      const hint = document.getElementById('apcmp-hint');
+      if (empty) empty.hidden = picked.length > 0 || d.status !== 'ok';
+      if (hint) hint.hidden = picked.length < 2;
+    }
+    if (!picked.length) {
+      const c = document.createElement('div');
+      c.className = 'sf-cmp-cell';
+      c.textContent = '—';
+      el.append(c);
+      return;
+    }
+    let best = null;
+    if (el.dataset.best === 'max' && picked.length > 1) {
+      const vals = picked.map((r) => r[f]).filter((v) => typeof v === 'number');
+      if (vals.length) best = Math.max(...vals);
+      if (vals.length && vals.every((v) => v === best)) best = null;
+    }
+    picked.forEach((r) => {
+      const c = document.createElement('div');
+      c.className = 'sf-cmp-cell';
+      c.dataset.source = 'aps';
+      c.dataset.where = 'model=' + encodeURIComponent(r.model);
+      c.dataset.field = f;
+      const v = r[f];
+      if (f === 'datasheet') {
+        if (typeof v === 'string' && v.startsWith('https://')) {
+          const a = document.createElement('a');
+          a.href = v; a.target = '_blank'; a.rel = 'noopener noreferrer';
+          a.textContent = 'Open datasheet';
+          c.append(a);
+        } else c.textContent = '—';
+      }
+      else if (f === 'notes' || f === 'radios' || f === 'poe' || f === 'uplinks') { c.classList.add('sf-wrapcell'); c.textContent = show(v); }
+      else if (v === 'Yes') { c.classList.add('sf-yes'); c.textContent = '✓ Yes'; }
+      else if (v === 'No') { c.classList.add('sf-no'); c.textContent = '✗ No'; }
+      else c.textContent = show(v);
+      if (best !== null && v === best) c.classList.add('sf-best');
+      el.append(c);
+    });
+  });
+})();
+
+/* ---------- Export to Excel / PDF (standalone page only; the Claude viewer blocks downloads) ---------- */
+(function () {
+  if (!(window.dash && window.dash.standalone)) return;
+  const box = document.getElementById('sf-export');
+  if (box) box.hidden = false;
+  const msg = document.getElementById('exp-msg');
+  const say = (t) => { if (msg) msg.textContent = t; };
+  const load = (src) => new Promise((res, rej) => {
+    if (document.querySelector('script[src="' + src + '"]')) return res();
+    const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = () => rej(new Error('Could not load ' + src)); document.head.appendChild(s);
+  });
+  const SW = [['model', 'Model'], ['vendor', 'Vendor'], ['series', 'Series'], ['os', 'OS'], ['form', 'Form factor'], ['ports', 'Access ports'], ['port_speed', 'Port speed'],
+    ['uplinks', 'Uplinks'], ['uplink_max_gbps', 'Max uplink (Gbps)'], ['poe', 'PoE'], ['poe_w_port', 'PoE W/port'], ['poe_budget_w', 'PoE budget (W)'],
+    ['switching_gbps', 'Switching (Gbps)'], ['fwd_mpps', 'Forwarding (Mpps)'], ['dram_gb', 'DRAM (GB)'], ['flash_gb', 'Flash (GB)'], ['mac', 'MAC entries'],
+    ['ipv4_routes', 'IPv4 routes'], ['stacking', 'Stacking'], ['stack_max', 'Max stack'], ['ospf', 'OSPF'], ['bgp', 'BGP'], ['evpn_vxlan', 'EVPN-VXLAN'],
+    ['macsec', 'MACsec'], ['mpls', 'MPLS'], ['redundant_psu', 'Redundant PSU'], ['verified', 'Verified'], ['notes', 'Notes'], ['datasheet', 'Datasheet']];
+  const SW_PDF = ['model', 'vendor', 'ports', 'port_speed', 'uplinks', 'poe', 'poe_budget_w', 'switching_gbps', 'dram_gb', 'flash_gb', 'mac', 'ipv4_routes', 'verified'];
+  const AP = [['model', 'Model'], ['vendor', 'Vendor'], ['family', 'Family'], ['wifi', 'Wi-Fi'], ['environment', 'Environment'], ['bands', 'Bands'],
+    ['has_6ghz', '6 GHz'], ['radios', 'Radios'], ['max_ss', 'Max streams/radio'], ['max_rate_gbps', 'Max rate (Gbps)'], ['uplinks', 'Uplinks'],
+    ['uplink_ports', 'Uplink ports'], ['uplink_max_gbps', 'Max uplink (Gbps)'], ['poe', 'PoE'], ['full_on_at', 'Full on 802.3at'],
+    ['max_power_w', 'Max power (W)'], ['ble', 'BLE/IoT'], ['usb', 'USB'], ['ip_rating', 'IP rating'], ['management', 'Management'],
+    ['verified', 'Verified'], ['notes', 'Notes'], ['datasheet', 'Datasheet']];
+  const AP_PDF = ['model', 'vendor', 'wifi', 'environment', 'max_rate_gbps', 'uplinks', 'poe', 'max_power_w', 'verified'];
+  const label = (defs, k) => (defs.find((d) => d[0] === k) || [k, k])[1];
+  const cell = (v) => (v == null ? '' : v);
+  const txt = (v) => (v == null || v === '' ? '-' : String(v));
+  const data = () => {
+    const sw = dash.data('specs'), ap = dash.data('aps');
+    const swRows = sw.status === 'ok' ? window.sfSortRows(window.sfFilter(sw.data), window.sfState.sort) : [];
+    const apRows = ap.status === 'ok' ? window.sfSortRows(window.apFilter(ap.data), window.apState.sort) : [];
+    const swCmp = sw.status === 'ok' ? window.sfState.sel.map((m) => sw.data.find((r) => r.model === m)).filter(Boolean) : [];
+    const apCmp = ap.status === 'ok' ? window.apState.sel.map((m) => ap.data.find((r) => r.model === m)).filter(Boolean) : [];
+    return { swRows, apRows, swCmp, apCmp };
+  };
+  const stamp = () => new Date().toISOString().slice(0, 10);
+
+  async function toXlsx() {
+    await load('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js');
+    const { swRows, apRows, swCmp, apCmp } = data();
+    const wb = XLSX.utils.book_new();
+    const table = (defs, rows) => [defs.map((d) => d[1])].concat(rows.map((r) => defs.map((d) => cell(r[d[0]]))));
+    const cmp = (defs, picked) => [['Spec'].concat(picked.map((r) => r.model))].concat(defs.slice(1).map((d) => [d[1]].concat(picked.map((r) => cell(r[d[0]])))));
+    const add = (name, aoa, widths) => { const ws = XLSX.utils.aoa_to_sheet(aoa); ws['!cols'] = widths.map((w) => ({ wch: w })); XLSX.utils.book_append_sheet(wb, ws, name); };
+    add('Switches', table(SW, swRows), SW.map((d) => (d[0] === 'notes' ? 60 : d[0] === 'datasheet' ? 50 : Math.max(10, d[1].length + 2))));
+    if (swCmp.length) add('Switch comparison', cmp(SW, swCmp), [22].concat(swCmp.map(() => 34)));
+    add('Access points', table(AP, apRows), AP.map((d) => (d[0] === 'notes' ? 60 : d[0] === 'datasheet' ? 50 : d[0] === 'radios' ? 40 : Math.max(10, d[1].length + 2))));
+    if (apCmp.length) add('AP comparison', cmp(AP, apCmp), [22].concat(apCmp.map(() => 34)));
+    add('About', [['Enterprise Campus Switch Spec Finder'], ['Exported', new Date().toLocaleString()], ['Switches exported', swRows.length], ['Access points exported', apRows.length],
+      ['Note', 'Rows reflect the filters and sort order on the page. Confirm figures on the linked vendor datasheet before quoting.'],
+      ['Source', 'https://mrevelino.github.io/switch-spec-finder/']], [24, 90]);
+    XLSX.writeFile(wb, 'switch-spec-finder-' + stamp() + '.xlsx');
+  }
+
+  async function toPdf() {
+    await load('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+    await load('https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js');
+    const { swRows, apRows, swCmp, apCmp } = data();
+    const doc = new window.jspdf.jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
+    const blue = [0, 80, 115], green = [1, 169, 130];
+    let first = true;
+    const heading = (t, sub) => {
+      if (!first) doc.addPage();
+      first = false;
+      doc.setFillColor(13, 39, 77); doc.rect(0, 0, doc.internal.pageSize.getWidth(), 6, 'F');
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(15); doc.setTextColor(23, 32, 43); doc.text(t, 36, 40);
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(91, 102, 117); doc.text(sub, 36, 56);
+    };
+    const tbl = (head, body, color, extra) => doc.autoTable(Object.assign({ head: [head], body, startY: 68, theme: 'grid',
+      styles: { fontSize: 7, cellPadding: 3, overflow: 'linebreak', textColor: [23, 32, 43] },
+      headStyles: { fillColor: color, textColor: 255, fontStyle: 'bold' }, alternateRowStyles: { fillColor: [244, 247, 250] },
+      margin: { left: 36, right: 36 } }, extra || {}));
+    const when = 'Exported ' + new Date().toLocaleString() + ' from https://mrevelino.github.io/switch-spec-finder/ - rows follow the page filters. Confirm figures on the vendor datasheet.';
+    heading('Matching switches (' + swRows.length + ')', when);
+    tbl(SW_PDF.map((k) => label(SW, k)), swRows.map((r) => SW_PDF.map((k) => txt(r[k]))), blue);
+    if (swCmp.length) {
+      heading('Switch comparison', 'Selected models side by side.');
+      tbl(['Spec'].concat(swCmp.map((r) => r.model)), SW.slice(1).map((d) => [d[1]].concat(swCmp.map((r) => txt(r[d[0]])))), green, { columnStyles: { 0: { fontStyle: 'bold', cellWidth: 110 } } });
+    }
+    heading('Matching access points (' + apRows.length + ')', when);
+    tbl(AP_PDF.map((k) => label(AP, k)), apRows.map((r) => AP_PDF.map((k) => txt(r[k]))), blue);
+    if (apCmp.length) {
+      heading('Access point comparison', 'Selected access points side by side.');
+      tbl(['Spec'].concat(apCmp.map((r) => r.model)), AP.slice(1).map((d) => [d[1]].concat(apCmp.map((r) => txt(r[d[0]])))), green, { columnStyles: { 0: { fontStyle: 'bold', cellWidth: 110 } } });
+    }
+    const n = doc.getNumberOfPages();
+    for (let i = 1; i <= n; i++) { doc.setPage(i); doc.setFontSize(8); doc.setTextColor(120); doc.text('Enterprise Campus Switch Spec Finder - page ' + i + ' of ' + n, 36, doc.internal.pageSize.getHeight() - 18); }
+    doc.save('switch-spec-finder-' + stamp() + '.pdf');
+  }
+
+  const wire = (id, fn, name) => {
+    const b = document.getElementById(id);
+    if (!b) return;
+    b.addEventListener('click', async () => {
+      b.disabled = true; say('Preparing ' + name + '…');
+      try { await fn(); say(name + ' downloaded.'); }
+      catch (e) { console.error(e); say('Could not create the ' + name + '. Check your connection and try again.'); }
+      finally { b.disabled = false; }
+    });
+  };
+  wire('exp-xlsx', toXlsx, 'Excel file');
+  wire('exp-pdf', toPdf, 'PDF');
+})();
+</script>
+
+<p class="sf-foot">Data: switches <a href="data/switch_specs.json">JSON</a> / <a href="data/switch_specs.csv">CSV</a> · access points <a href="data/access_points.json">JSON</a> / <a href="data/access_points.csv">CSV</a> · Sources and method in the <a href="https://github.com/mrevelino/switch-spec-finder#readme">README</a>. Vendor and product names belong to their owners; always confirm figures on the linked datasheet.</p>
 <div class="sf-foot sf-visits">
   <img src="https://hits.sh/mrevelino.github.io/switch-spec-finder.svg?view=today-total&amp;label=Page%20views&amp;color=049fd9&amp;labelColor=0d274d" alt="Page views today and in total" height="20">
   <span>Page views today / all time. Every page load counts, including repeat visits; counted by <a href="https://hits.sh/" rel="noopener">hits.sh</a>.</span>
@@ -745,6 +1249,10 @@ fetch('data/switch_specs.json')
   .then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); })
   .then((j) => dash._set('specs', { status: 'ok', data: j.rows }))
   .catch(() => { dash._set('specs', { status: 'error', data: [] }); const e = document.getElementById('load-error'); if (e) e.hidden = false; });
+fetch('data/access_points.json')
+  .then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); })
+  .then((j) => dash._set('aps', { status: 'ok', data: j.rows }))
+  .catch(() => { dash._set('aps', { status: 'error', data: [] }); const e = document.getElementById('load-error'); if (e) e.hidden = false; });
 </script>
 </body>
 </html>
